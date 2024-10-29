@@ -34,9 +34,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
-    // Web3j 관련 의존성
-    implementation 'org.web3j:core:4.8.7'
-    implementation 'org.web3j:crypto:4.8.7'
+    // Web3j 관련 의존성 (버전 업데이트)
+    implementation 'org.web3j:core:4.10.2'
+    implementation 'org.web3j:crypto:4.10.2'
+
+    // Spring Security 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 tasks.named('test') {

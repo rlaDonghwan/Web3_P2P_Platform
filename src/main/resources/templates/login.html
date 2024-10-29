@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Login page</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <link href="https://getbootstrap.com/docs/4.0/examples/signin/signin.css" rel="stylesheet" crossorigin="anonymous"/>
+</head>
+<body>
+<div class="container">
+    <div class="form-signin">
+        <h3 class="form-signin-heading">Please sign in</h3>
+        <p th:if="${param.error}" class="text-danger">Invalid signature</p>
+        <button class="btn btn-lg btn-primary btn-block" type="button" onclick="login()">Login with MetaMask</button>
+    </div>
+</div>
+<script th:inline="javascript">
+    async function login() {
+        if (!window.ethereum) {
+            alert('Please install MetaMask');
+            return;
+        }
+
+        try {
+            // Prompt user to connect MetaMask
+            const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
+            const address = accounts[0];
+
+            // Receive nonce and sign a message
+            const nonce = await getNonce(address);
+            const message = `Signing a message to login: ${nonce}`;
+            const signature = await window.ethereum.request({method: 'personal_sign', params: [message, address]});
+
+            // Login with signature
+            await sendLoginData(address, signature);
+
+        } catch (error) {
+            console.error('Error during MetaMask login:', error);
+            alert('MetaMask 로그인 중 문제가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    async function getNonce(address) {
+        try {
+            const response = await fetch(`/nonce/${address}`);
+            if (!response.ok) throw new Error('Failed to fetch nonce');
+            return await response.text();
+        } catch (error) {
+            console.error('Error fetching nonce:', error);
+            alert('서버에서 인증 정보를 가져오는 데 실패했습니다.');
+        }
+    }
+
+    async function sendLoginData(address, signature) {
+        try {
+            const response = await fetch('/auth/login-with-signature', {
+                method: 'POST',
+                headers: {'content-type': 'application/json'},
+                body: JSON.stringify({
+                    account: address,
+                    signature: signature
+                })
+            });
+
+            if (response.ok) {
+                alert('로그인 성공!');
+                window.location.href = '/home';
+            } else {
+                const errorText = await response.text();
+                alert(`로그인 실패: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Error during login request:', error);
+            alert('로그인 요청 중 오류가 발생했습니다.');
+        }
+    }
+</script>
+</body>
+</html>

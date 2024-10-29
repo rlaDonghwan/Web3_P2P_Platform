@@ -1,4 +1,4 @@
-package com.inhatc.SafeCommerce.domain;
+package com.inhatc.SafeCommerce.model;
 
 public enum OrderStatus{
     ORDER, CANCEL
