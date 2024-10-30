@@ -6,6 +6,7 @@
     <title>홈 페이지</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
+        /* 기존 스타일 */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -24,15 +25,6 @@
         .nav h1 {
             font-size: 24px;
             margin: 0;
-        }
-        .nav .login-button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
         }
         .banner {
             display: flex;
@@ -89,23 +81,90 @@
             cursor: pointer;
             font-size: 16px;
         }
+
+        /* 로그인 버튼 스타일 */
+        .login-button {
+            padding: 15px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
 
 <div class="nav">
     <h1>SafeCommerce</h1>
-    <button class="login-button" id="loginButton">로그인</button>
+    <div class="form-signin">
+        <p th:if="${param.error}" class="text-danger">Invalid signature</p>
+        <button class="login-button" type="button" onclick="login()">Login</button>
+    </div>
 </div>
 
 <div class="banner">
     Welcome to SafeCommerce!
 </div>
 
-<script>
-    document.getElementById('loginButton').addEventListener('click', function() {
-        window.location.href = '/login'; // 로그인 페이지로 이동
-    });
+<script th:inline="javascript">
+    async function login() {
+        if (!window.ethereum) {
+            alert('Please install MetaMask');
+            return;
+        }
+
+        try {
+            const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
+            const address = accounts[0];
+            const nonce = await getNonce(address);
+            const message = `Signing a message to login: ${nonce}`;
+            const signature = await window.ethereum.request({method: 'personal_sign', params: [message, address]});
+            await sendLoginData(address, signature);
+        } catch (error) {
+            console.error('Error during MetaMask login:', error);
+            alert('MetaMask 로그인 중 문제가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    async function getNonce(address) {
+        try {
+            const response = await fetch(`/nonce/${address}`);
+            if (!response.ok) throw new Error('Failed to fetch nonce');
+            return await response.text();
+        } catch (error) {
+            console.error('Error fetching nonce:', error);
+            alert('서버에서 인증 정보를 가져오는 데 실패했습니다.');
+        }
+    }
+
+    async function sendLoginData(address, signature) {
+        try {
+            const response = await fetch('/auth/login-with-signature', {
+                method: 'POST',
+                headers: {'content-type': 'application/json'},
+                body: JSON.stringify({ account: address, signature })
+            });
+
+            if (response.ok) {
+                alert('로그인 성공!');
+                window.location.href = '/home';
+            } else {
+                const errorText = await response.text();
+                alert(`로그인 실패: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Error during login request:', error);
+            alert('로그인 요청 중 오류가 발생했습니다.');
+        }
+    }
 </script>
 
 <div class="product-grid">

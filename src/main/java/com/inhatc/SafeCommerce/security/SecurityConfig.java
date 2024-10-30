@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/auth/**", "/home").permitAll() // 로그인 및 인증 경로 접근 허용
                         .anyRequest().authenticated()) // 그 외 요청은 인증 필요
                 .formLogin(form -> form
-                        .loginPage("/login") // 로그인 페이지 경로
+                        .loginPage("/home") // 로그인 페이지 경로
                         .defaultSuccessUrl("/home", true) // 로그인 성공 시 홈으로
                         .failureUrl("/login?error=true") // 로그인 실패 시
                         .permitAll())
