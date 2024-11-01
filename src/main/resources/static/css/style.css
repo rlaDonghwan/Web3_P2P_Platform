@@ -38,6 +38,24 @@ body {
     font-weight: bold;
 }
 
+.balance-display {
+    display: none; /* 기본적으로는 숨김 */
+    align-items: center;
+    background-color: #e3f2fd; /* 잔액 표시 영역에 약간의 배경색 추가 */
+    padding: 5px 10px; /* 패딩 추가 */
+    border: 1px solid #b3d7ff; /* 연한 파스텔 블루 테두리 */
+    border-radius: 5px;
+    font-weight: bold; /* 텍스트 강조 */
+    color: #333;
+}
+
+.balance-display img {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
 .banner {
     display: flex;
     flex-direction: column;
@@ -122,4 +140,42 @@ body {
 .product-details p {
     font-size: 14px;
     color: #777; /* 다소 연한 회색 */
+}
+/* 팝업 창 스타일 */
+.popup {
+    position: absolute; /* 절대 위치 설정 - 페이지의 상대적인 위치에 따라 배치 */
+    top: 50px; /* 상단에서 40px 떨어진 위치에 팝업을 표시 */
+    right: 20px; /* 오른쪽에서 30px 떨어진 위치에 팝업을 표시 */
+    background-color: white; /* 팝업 배경색을 흰색으로 설정 */
+    padding: 10px; /* 팝업 내부 여백을 20px로 설정하여 콘텐츠와의 간격 확보 */
+    border-radius: 8px; /* 팝업 모서리를 둥글게 만들어 부드러운 느낌을 줌 */
+    width: 300px; /* 팝업의 너비를 250px로 설정 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* 팝업에 그림자를 추가하여 입체감 제공 */
+    display: none; /* 기본적으로 팝업은 숨김 처리 (show/hide를 통해 표시) */
+}
+
+.popup-content {
+    text-align: left;
+    color: #333;
+}
+
+.close-btn, .logout-btn {
+    background-color: #007bff; /* 버튼 색상 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.logout-btn {
+    margin-top: 10px;
 }
