@@ -1,0 +1,125 @@
+/* 기본 스타일 */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f9fc; /* 부드러운 배경색으로 변경 */
+    color: #333; /* 기본 글자 색 */
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #007bff; /* 밝은 파스텔 블루 */
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.nav .menu a {
+    margin: 0 10px;
+    color: white;
+    text-decoration: none;
+}
+
+.login-button {
+    padding: 10px 20px;
+    background-color: #0056b3; /* 조금 더 어두운 파스텔 블루 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.banner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    background-color: #b3d7ff; /* 연한 파스텔 블루 */
+    color: #333; /* 텍스트 색 */
+    font-size: 36px;
+    text-align: center;
+}
+
+.banner h2 {
+    margin: 0;
+}
+
+.banner p {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+/* 캐러셀 스타일 */
+.carousel {
+    overflow: hidden;
+    width: 100%;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+
+.carousel-track img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+/* 제품 카드 스타일 */
+.product-section {
+    margin: 40px 20px;
+}
+
+.product-section h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.product-grid {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.product-card {
+    background-color: #ffffff; /* 화이트 */
+    width: 200px;
+    margin: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+    transform: scale(1.05);
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.product-details h3 {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.product-details p {
+    font-size: 14px;
+    color: #777; /* 다소 연한 회색 */
+}

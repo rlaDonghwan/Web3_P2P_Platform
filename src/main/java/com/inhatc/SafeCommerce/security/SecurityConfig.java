@@ -27,7 +27,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        // MetaMaskAuthenticationProvider를 사용하는 ProviderManager 생성
         return new ProviderManager(List.of(metaMaskAuthenticationProvider));
     }
 
@@ -35,19 +34,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll() // Nonce 엔드포인트는 허용
-                        .requestMatchers("/login", "/auth/**", "/home").permitAll() // 로그인 및 인증 경로 접근 허용
-                        .anyRequest().authenticated()) // 그 외 요청은 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll()
+                        .requestMatchers("/login", "/auth/**", "/home").permitAll()
+                        .requestMatchers("/css/**", "/js/**").permitAll()  // 정적 리소스 접근 허용
+                        .anyRequest().authenticated())
                 .formLogin(form -> form
-                        .loginPage("/home") // 로그인 페이지 경로
-                        .defaultSuccessUrl("/home", true) // 로그인 성공 시 홈으로
-                        .failureUrl("/login?error=true") // 로그인 실패 시
+                        .loginPage("/login") // 로그인 페이지 경로
+                        .defaultSuccessUrl("/home", true)
+                        .failureUrl("/login?error=true")
                         .permitAll())
                 .logout(logout -> logout
-                        .logoutUrl("/logout") // 로그아웃 URL
-                        .logoutSuccessUrl("/login?logout=true") // 로그아웃 성공 시
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout=true")
                         .permitAll())
-                .csrf().disable(); // 개발 중에는 CSRF 비활성화
+                .csrf().disable();
 
         return http.build();
     }

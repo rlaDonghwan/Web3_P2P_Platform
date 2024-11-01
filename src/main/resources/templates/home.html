@@ -1,200 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>홈 페이지</title>
+    <!-- CSS 파일 경로 설정 -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-    <style>
-        /* 기존 스타일 */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #333;
-            color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .nav h1 {
-            font-size: 24px;
-            margin: 0;
-        }
-        .banner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-            background-color: #555;
-            color: white;
-            font-size: 36px;
-        }
-        .product-grid {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin: 40px 20px;
-        }
-        .product-card {
-            background-color: white;
-            width: 250px;
-            margin: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: transform 0.2s ease;
-        }
-        .product-card:hover {
-            transform: scale(1.05);
-        }
-        .product-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        .product-details {
-            padding: 15px;
-            text-align: center;
-        }
-        .product-details h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-        .product-details p {
-            margin: 10px 0;
-            font-size: 16px;
-            color: #777;
-        }
-        .buy-button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        /* 로그인 버튼 스타일 */
-        .login-button {
-            padding: 15px 25px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .login-button:hover {
-            background-color: #0056b3;
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
-        }
-    </style>
 </head>
 <body>
 
+<!-- 헤더 섹션 -->
 <div class="nav">
-    <h1>SafeCommerce</h1>
-    <div class="form-signin">
-        <p th:if="${param.error}" class="text-danger">Invalid signature</p>
-        <button class="login-button" type="button" onclick="login()">Login</button>
+    <h1>Coin Trade</h1>
+    <div class="menu">
+        <a href="#">Home</a>
+        <a href="#">My Page</a>
+    </div>
+    <button class="login-button" onclick="login()">Login</button>
+
+</div>
+
+
+<!-- JavaScript 파일 경로 설정 -->
+<script th:src="@{/js/login.js}"></script>
+
+<!-- 캐러셀 섹션 -->
+<div class="carousel">
+    <div class="carousel-track">
+        <img src="https://via.placeholder.com/800x150" alt="Ad 1">
+        <img src="https://via.placeholder.com/800x150" alt="Ad 2">
+        <img src="https://via.placeholder.com/800x150" alt="Ad 3">
     </div>
 </div>
 
-<div class="banner">
-    Welcome to SafeCommerce!
-</div>
-
-<script th:inline="javascript">
-    async function login() {
-        if (!window.ethereum) {
-            alert('Please install MetaMask');
-            return;
-        }
-
-        try {
-            const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
-            const address = accounts[0];
-            const nonce = await getNonce(address);
-            const message = `Signing a message to login: ${nonce}`;
-            const signature = await window.ethereum.request({method: 'personal_sign', params: [message, address]});
-            await sendLoginData(address, signature);
-        } catch (error) {
-            console.error('Error during MetaMask login:', error);
-            alert('MetaMask 로그인 중 문제가 발생했습니다. 다시 시도해주세요.');
-        }
-    }
-
-    async function getNonce(address) {
-        try {
-            const response = await fetch(`/nonce/${address}`);
-            if (!response.ok) throw new Error('Failed to fetch nonce');
-            return await response.text();
-        } catch (error) {
-            console.error('Error fetching nonce:', error);
-            alert('서버에서 인증 정보를 가져오는 데 실패했습니다.');
-        }
-    }
-
-    async function sendLoginData(address, signature) {
-        try {
-            const response = await fetch('/auth/login-with-signature', {
-                method: 'POST',
-                headers: {'content-type': 'application/json'},
-                body: JSON.stringify({ account: address, signature })
-            });
-
-            if (response.ok) {
-                alert('로그인 성공!');
-                window.location.href = '/home';
-            } else {
-                const errorText = await response.text();
-                alert(`로그인 실패: ${errorText}`);
-            }
-        } catch (error) {
-            console.error('Error during login request:', error);
-            alert('로그인 요청 중 오류가 발생했습니다.');
-        }
-    }
-</script>
-
-<div class="product-grid">
-    <div class="product-card">
-        <img src="https://via.placeholder.com/250x200" alt="Product 1" class="product-image">
-        <div class="product-details">
-            <h3>Product 1</h3>
-            <p>$10.00</p>
-            <button class="buy-button">Buy Now</button>
+<!-- 추천 리스트 섹션 -->
+<section class="product-section">
+    <h3>추천 리스트</h3>
+    <div class="product-grid">
+        <div class="product-card">
+            <img src="https://via.placeholder.com/250x200" alt="Product 1">
+            <div class="product-details">
+                <h3>Product 1</h3>
+                <p>₩35,000</p>
+            </div>
+        </div>
+        <div class="product-card">
+            <img src="https://via.placeholder.com/250x200" alt="Product 2">
+            <div class="product-details">
+                <h3>Product 2</h3>
+                <p>₩42,000</p>
+            </div>
         </div>
     </div>
+</section>
 
-    <div class="product-card">
-        <img src="https://via.placeholder.com/250x200" alt="Product 2" class="product-image">
-        <div class="product-details">
-            <h3>Product 2</h3>
-            <p>$20.00</p>
-            <button class="buy-button">Buy Now</button>
+<!-- 신상품 섹션 -->
+<section class="product-section">
+    <h3>신상품</h3>
+    <div class="product-grid">
+        <div class="product-card">
+            <img src="https://via.placeholder.com/250x200" alt="New Product 1">
+            <div class="product-details">
+                <h3>New Product 1</h3>
+                <p>₩55,000</p>
+            </div>
+        </div>
+        <div class="product-card">
+            <img src="https://via.placeholder.com/250x200" alt="New Product 2">
+            <div class="product-details">
+                <h3>New Product 2</h3>
+                <p>₩63,000</p>
+            </div>
         </div>
     </div>
-
-    <div class="product-card">
-        <img src="https://via.placeholder.com/250x200" alt="Product 3" class="product-image">
-        <div class="product-details">
-            <h3>Product 3</h3>
-            <p>$30.00</p>
-            <button class="buy-button">Buy Now</button>
-        </div>
-    </div>
-</div>
+</section>
 
 </body>
 </html>
