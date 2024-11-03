@@ -10,46 +10,13 @@
 </head>
 <body>
 
-<!-- 헤더 섹션 -->
-<!-- 로그인 버튼과 잔액 표시 요소 추가 -->
-<div class="nav">
-    <h1>Coin Trade</h1>
-    <div class="menu">
-        <a href="#">Home</a>
-        <a href="#">My Page</a>
-    </div>
-    <button class="login-button" id="loginButton" onclick="login()">Login</button>
-    <div class="balance-display" id="balanceDisplay" style="display: none; align-items: center;" onclick="openPopup()">
-        <img src="/images/wallet_icon.png" style="width: 20px; height: 20px; margin-right: 5px;">
-        <span>ETH: </span>
-        <span id="ethBalance" style="margin-left: 5px;"></span>
-    </div>
-</div>
+<div th:insert="~{nav.html}"></div>
 
-<!-- 계좌 세부정보 팝업 -->
-<div class="popup" id="popup">
-    <div class="popup-content">
-        <button class="close-btn" onclick="closePopup()">×</button>
-        <h3>지갑 세부정보</h3> <!-- Wallet Details in Korean -->
-        <p>주소: <span id="walletAddressText"></span></p> <!-- Address -->
-        <p>잔액: <span id="walletBalance"></span></p> <!-- Balance -->
-        <button class="logout-btn" onclick="logout()">로그아웃</button> <!-- Logout in Korean -->
-    </div>
-</div>
+<div th:insert="~{popup.html}"></div>
 
 <!-- JavaScript 파일 경로 설정 -->
 <script th:src="@{/js/login.js}"></script>
 
-<!-- 캐러셀 섹션 -->
-<div class="carousel">
-    <div class="carousel-track">
-        <img src="https://via.placeholder.com/800x150" alt="Ad 1">
-        <img src="https://via.placeholder.com/800x150" alt="Ad 2">
-        <img src="https://via.placeholder.com/800x150" alt="Ad 3">
-    </div>
-</div>
-
-<!-- 추천 리스트 섹션 -->
 <section class="product-section">
     <h3>추천 리스트</h3>
     <div class="product-grid">
@@ -90,6 +57,16 @@
         </div>
     </div>
 </section>
+
+<!-- 상품 등록 버튼 -->
+<button class="add-item-button" onclick="openAddItemPage()">+ 상품 등록</button>
+
+<script>
+    // 상품 등록 페이지로 이동하는 함수
+    function openAddItemPage() {
+        window.location.href = "/addItem"; // 상품 등록 페이지의 URL로 이동
+    }
+</script>
 
 </body>
 </html>

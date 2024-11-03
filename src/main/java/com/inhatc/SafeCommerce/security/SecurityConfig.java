@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 특정 경로에 대해 인증 없이 접근 가능하도록 설정
                         .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll() // GET 요청의 /nonce/* 경로 허용
-                        .requestMatchers("/login", "/auth/**", "/home").permitAll() // 로그인, 인증, 홈 경로 허용
+                        .requestMatchers("/login", "/auth/**", "/home","addItem").permitAll() // 로그인, 인증, 홈 경로 허용
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // 정적 리소스 접근 허용
                         .anyRequest().authenticated()) // 위 경로 이외의 요청은 인증 필요
 
@@ -57,13 +57,5 @@ public class SecurityConfig {
         return http.build(); // 보안 필터 체인을 반환
     }
 
-    // MetaMaskAuthenticationFilter 설정 메서드
-//    private MetaMaskAuthenticationFilter authenticationFilter(AuthenticationManager authenticationManager) {
-//        MetaMaskAuthenticationFilter filter = new MetaMaskAuthenticationFilter();
-//        filter.setAuthenticationManager(authenticationManager); // MetaMask 인증에 사용할 AuthenticationManager 설정
-//        filter.setAuthenticationSuccessHandler(new MetaMaskAuthenticationSuccessHandler(userRepository)); // 인증 성공 처리기 설정
-//        filter.setAuthenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler("/login?error=true")); // 인증 실패 처리기 설정
-//        filter.setSecurityContextRepository(new HttpSessionSecurityContextRepository()); // 인증 상태를 세션에 저장
-//        return filter;
-//    }
+
 }

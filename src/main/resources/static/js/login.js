@@ -22,7 +22,7 @@ function startSessionTimer() {
 // MetaMask를 통한 로그인 함수
 async function login() {
     if (!window.ethereum) {
-        alert('Please install MetaMask');
+        alert('MetaMask를 설치해주세요.');
         return;
     }
 
@@ -46,7 +46,7 @@ async function login() {
             startSessionTimer(); // 30분 세션 타이머 시작
         }
     } catch (error) {
-        console.error('Error during MetaMask login:', error);
+        console.error('MetaMask 로그인 중 오류:', error);
     }
 }
 
@@ -54,10 +54,10 @@ async function login() {
 async function getNonce(address) {
     try {
         const response = await fetch(`/nonce/${address}`);
-        if (!response.ok) throw new Error('Failed to fetch nonce');
+        if (!response.ok) throw new Error('Nonce 가져오기 실패');
         return await response.text();
     } catch (error) {
-        console.error('Error fetching nonce:', error);
+        console.error('Nonce 가져오는 중 오류:', error);
     }
 }
 
@@ -76,7 +76,7 @@ async function sendLoginData(address, signature) {
         }
         return response;
     } catch (error) {
-        console.error('Error during login request:', error);
+        console.error('로그인 요청 중 오류 발생:', error);
     }
 }
 
@@ -100,10 +100,10 @@ async function saveBalanceToServer(balance) {
             body: JSON.stringify({ balance })
         });
         if (!response.ok) {
-            console.error('Failed to save balance on server');
+            console.error('서버에 잔액 저장 실패');
         }
     } catch (error) {
-        console.error('Error saving balance:', error);
+        console.error('잔액 저장 중 오류:', error);
     }
 }
 
@@ -123,12 +123,13 @@ async function checkLoginStatus() {
             document.getElementById('balanceDisplay').style.display = 'none';
         }
     } catch (error) {
-        console.error('Error checking login status:', error);
+        console.error('로그인 상태 확인 중 오류:', error);
     }
 }
 
 // 페이지 로드 시 로그인 상태를 확인하여 UI 업데이트
 window.onload = checkLoginStatus;
+
 // 로그아웃 함수 - 세션을 종료하고 UI를 업데이트합니다.
 async function logout() {
     try {

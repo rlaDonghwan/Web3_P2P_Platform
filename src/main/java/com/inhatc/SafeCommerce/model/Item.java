@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter @Setter
 public class Item {
@@ -12,15 +15,15 @@ public class Item {
     @Column(name = "item_id")
     private Long itemId;
 
-    private String itemName;
+    private String itemName; // 상품 이름
+    private String itemDescription; // 상품 설명
+    private int price; // 가격
+    private int quantity; // 수량
 
-    private String itemDescription;
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemImage> images = new ArrayList<>();
 
-    private int price;
-
-    private int quantity;
-
-
-
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // User와의 외래키 설정
+    private User user; // 상품을 등록한 사용자
 }
