@@ -5,8 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 public class ItemImage {
 
     @Id
@@ -19,4 +18,7 @@ public class ItemImage {
 
     @Lob
     private byte[] imageData;
+
+    @Transient
+    private String base64Image; // Base64로 인코딩된 이미지, DB에는 저장되지 않음
 }

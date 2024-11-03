@@ -17,46 +17,7 @@
 <!-- JavaScript 파일 경로 설정 -->
 <script th:src="@{/js/login.js}"></script>
 
-<section class="product-section">
-    <h3>추천 리스트</h3>
-    <div class="product-grid">
-        <div class="product-card">
-            <img src="https://via.placeholder.com/250x200" alt="Product 1">
-            <div class="product-details">
-                <h3>Product 1</h3>
-                <p>₩35,000</p>
-            </div>
-        </div>
-        <div class="product-card">
-            <img src="https://via.placeholder.com/250x200" alt="Product 2">
-            <div class="product-details">
-                <h3>Product 2</h3>
-                <p>₩42,000</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- 신상품 섹션 -->
-<section class="product-section">
-    <h3>신상품</h3>
-    <div class="product-grid">
-        <div class="product-card">
-            <img src="https://via.placeholder.com/250x200" alt="New Product 1">
-            <div class="product-details">
-                <h3>New Product 1</h3>
-                <p>₩55,000</p>
-            </div>
-        </div>
-        <div class="product-card">
-            <img src="https://via.placeholder.com/250x200" alt="New Product 2">
-            <div class="product-details">
-                <h3>New Product 2</h3>
-                <p>₩63,000</p>
-            </div>
-        </div>
-    </div>
-</section>
+<div th:insert="~{item_list.html}"></div>
 
 <!-- 상품 등록 버튼 -->
 <button class="add-item-button" onclick="openAddItemPage()">+ 상품 등록</button>
