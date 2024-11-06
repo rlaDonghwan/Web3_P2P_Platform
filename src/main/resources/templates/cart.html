@@ -7,6 +7,7 @@
         /* 장바구니 스타일 */
         .cart-container {
             display: flex;
+            flex-direction: row; /* 좌우 배치 */
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -73,9 +74,7 @@
     </style>
 </head>
 <body>
-
 <div class="cart-container">
-    <!-- 장바구니 상품 목록 -->
     <div class="cart-items">
         <h2>장바구니 상품</h2>
         <div th:each="cartItem : ${cartItems}" class="cart-item">
@@ -84,13 +83,15 @@
             <div class="cart-item-details">
                 <h4 th:text="${cartItem.item.itemName}">상품 이름</h4>
                 <p class="cart-item-price" th:text="'₩' + ${cartItem.price}">가격</p>
-                <p class="cart-item-quantity" th:text="'수량: ' + ${cartItem.quantity}">수량</p>
+                <select class="item-quantity" th:attr="data-cart-item-id=${cartItem.id}" onchange="updateQuantity(this)">
+                    <option th:each="i : ${#numbers.sequence(1, 10)}" th:value="${i}" th:text="${i}"
+                            th:selected="${i == cartItem.quantity}"></option>
+                </select>
             </div>
-            <button class="remove-btn" onclick="removeItem(${cartItem.id})">삭제</button>
+            <button class="remove-btn" th:attr="data-cart-item-id=${cartItem.id}" onclick="removeItem(this)">삭제</button>
         </div>
     </div>
 
-    <!-- 주문 요약 -->
     <div class="cart-summary">
         <h2>주문 요약</h2>
         <p>총 상품 금액: <span id="totalPrice" th:text="'₩' + ${totalPrice}">0원</span></p>
@@ -104,14 +105,17 @@
     // 페이지가 로드될 때 총 금액을 계산
     document.addEventListener("DOMContentLoaded", updateTotal);
 
-    // 선택된 항목의 총 금액을 계산하고 업데이트하는 함수
     function updateTotal() {
         const checkboxes = document.querySelectorAll('.item-checkbox');
         let totalPrice = 0;
 
         checkboxes.forEach(checkbox => {
             if (checkbox.checked) {
-                totalPrice += parseInt(checkbox.getAttribute('data-price'));
+                const pricePerItem = parseInt(checkbox.getAttribute('data-price')) / parseInt(checkbox.parentElement.querySelector('.item-quantity').value);
+                const quantity = parseInt(checkbox.parentElement.querySelector('.item-quantity').value);
+                const totalItemPrice = pricePerItem * quantity;
+                totalPrice += totalItemPrice;
+                checkbox.setAttribute('data-price', totalItemPrice);
             }
         });
 
@@ -119,15 +123,40 @@
         document.getElementById("finalPrice").innerText = '₩' + totalPrice.toLocaleString();
     }
 
-    // 장바구니에서 아이템을 삭제하는 기능
-    function removeItem(itemId) {
-        // Ajax 호출로 서버에 요청하여 아이템을 장바구니에서 삭제
-    }
+    // 장바구니에서 아이템 수량 변경 시 호출
+    function updateQuantity(element) {
+        const cartItemId = element.getAttribute("data-cart-item-id");
+        const quantity = element.value;
 
-    function checkout() {
-        // 결제하기 로직 추가
+        console.log("cartItemId:", cartItemId); // 올바른 값인지 확인
+        console.log("quantity:", quantity);     // 올바른 값인지 확인
+
+        // 유효성 검사
+        if (!cartItemId || isNaN(cartItemId) || !quantity || isNaN(quantity) || parseInt(quantity) < 1) {
+            alert("유효하지 않은 cartItemId 또는 quantity입니다.");
+            return;
+        }
+
+        fetch('/cart/updateQuantity', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ cartItemId: parseInt(cartItemId), quantity: parseInt(quantity) })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error(`Server error: ${response.status}`);
+                    return response.text().then(text => {
+                        alert(`오류가 발생했습니다: ${text}` || "알 수 없는 오류");
+                    });
+                } else {
+                    // 업데이트 후 페이지 새로고침
+                    location.reload(); // 페이지 새로 고침
+                }
+            })
+            .catch(error => console.error('Fetch error:', error));
     }
 </script>
-
 </body>
 </html>

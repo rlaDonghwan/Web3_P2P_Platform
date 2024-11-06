@@ -18,6 +18,8 @@ public class UserService {
                 .map(this::convertToDTO)
                 .orElseGet(() -> createUser(accountId));
     }
+    //------------------------------------------------------------------------------------------------------------------
+
 
     // 새 사용자 생성 및 저장
     private UserDTO createUser(String accountId) {
@@ -34,9 +36,13 @@ public class UserService {
 
         return convertToDTO(newUser);
     }
+    //------------------------------------------------------------------------------------------------------------------
+
 
     // User 엔티티 -> UserDTO로 변환
     private UserDTO convertToDTO(User user) {
         return new UserDTO(user.getId(), user.getAccountId(), user.getNonce());
     }
+    //------------------------------------------------------------------------------------------------------------------
+
 }

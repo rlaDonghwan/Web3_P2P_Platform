@@ -25,7 +25,7 @@ public class ItemController {
     // 상품 추가 폼으로 이동
     @GetMapping("/addItem")
     public String addItemForm() {
-        return "add_item";
+        return "item_add";
     }
 
     // 상품 추가 메서드

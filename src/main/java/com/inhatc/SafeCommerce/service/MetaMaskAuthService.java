@@ -40,4 +40,6 @@ public class MetaMaskAuthService {
 
         return ResponseEntity.ok(new AuthenticationResponse("Authenticated", user.getAccountId()));
     }
+    //------------------------------------------------------------------------------------------------------------------
+
 }
