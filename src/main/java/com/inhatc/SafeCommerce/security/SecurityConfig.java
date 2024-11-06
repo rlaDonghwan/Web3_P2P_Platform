@@ -35,11 +35,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // 특정 경로에 대해 인증 없이 접근 가능하도록 설정
-                        .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll() // GET 요청의 /nonce/* 경로 허용
-                        .requestMatchers("/login", "/auth/**", "/home","addItem").permitAll() // 로그인, 인증, 홈 경로 허용
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // 정적 리소스 접근 허용
-                        .anyRequest().authenticated()) // 위 경로 이외의 요청은 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll()
+                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/**", "/cart/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().authenticated())
 
                 .formLogin(form -> form
                         .loginPage("/login") // 로그인 페이지 경로 설정

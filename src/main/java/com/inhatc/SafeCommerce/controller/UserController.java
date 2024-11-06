@@ -43,8 +43,9 @@ public class UserController {
         }
         return response;
     }
+    //------------------------------------------------------------------------------------------------------------------
 
-    // 로그인 상태 확인
+    // 로그인 상태 확인 요청 처리
     @GetMapping("/auth/check-login-status")
     public ResponseEntity<?> checkLoginStatus() {
         Boolean isLoggedIn = (Boolean) httpSession.getAttribute("isLoggedIn");
@@ -59,6 +60,7 @@ public class UserController {
             return ResponseEntity.ok(Collections.singletonMap("isLoggedIn", "false"));
         }
     }
+    //------------------------------------------------------------------------------------------------------------------
 
     // 서명 기반 로그인 요청 처리
     @PostMapping("/auth/login-with-signature")
@@ -78,8 +80,9 @@ public class UserController {
             return ResponseEntity.badRequest().body("서명 검증 실패");
         }
     }
+    //------------------------------------------------------------------------------------------------------------------
 
-    // 클라이언트에서 전송한 잔액을 세션에 저장하는 엔드포인트
+    // 클라이언트에서 전송한 잔액을 세션에 저장하는 메서드
     @PostMapping("/auth/save-balance")
     public ResponseEntity<?> saveBalance(@RequestBody Map<String, String> balanceData) {
         String balance = balanceData.get("balance");
@@ -87,18 +90,21 @@ public class UserController {
         logger.info("Save balance: {}", balance);
         return ResponseEntity.ok("Balance saved");
     }
+    //------------------------------------------------------------------------------------------------------------------
 
-    // 로그아웃 요청 처리
+    //로그아웃 요청 처리
     @PostMapping("/auth/logout")
     public ResponseEntity<?> logout() {
         httpSession.invalidate(); // 현재 세션 무효화
         return ResponseEntity.ok("Logged out successfully");
     }
+    //------------------------------------------------------------------------------------------------------------------
 
-    // 세션에 사용자 정보를 설정하는 헬퍼 메서드
+    //세션에 사용자 정보를 설정하는 헬퍼 메서드
     private void setUserSession(UserDTO user) {
         httpSession.setAttribute("user", user);
         httpSession.setAttribute("userId", user.getId()); // userId도 세션에 저장
         httpSession.setAttribute("isLoggedIn", true);
     }
+    //------------------------------------------------------------------------------------------------------------------
 }

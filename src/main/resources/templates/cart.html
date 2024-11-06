@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>장바구니</title>
+    <style>
+        /* 장바구니 스타일 */
+        .cart-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .cart-items {
+            width: 70%;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .cart-summary {
+            width: 30%;
+            padding: 20px;
+            margin-left: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-item img {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+            border-radius: 8px;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-price, .cart-item-quantity {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .checkout-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .checkout-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="cart-container">
+    <!-- 장바구니 상품 목록 -->
+    <div class="cart-items">
+        <h2>장바구니 상품</h2>
+        <div th:each="cartItem : ${cartItems}" class="cart-item">
+            <input type="checkbox" class="item-checkbox" checked onclick="updateTotal()" th:attr="data-price=${cartItem.price * cartItem.quantity}">
+            <img th:src="${cartItem.item.images[0]?.base64Image}" alt="Item Image">
+            <div class="cart-item-details">
+                <h4 th:text="${cartItem.item.itemName}">상품 이름</h4>
+                <p class="cart-item-price" th:text="'₩' + ${cartItem.price}">가격</p>
+                <p class="cart-item-quantity" th:text="'수량: ' + ${cartItem.quantity}">수량</p>
+            </div>
+            <button class="remove-btn" onclick="removeItem(${cartItem.id})">삭제</button>
+        </div>
+    </div>
+
+    <!-- 주문 요약 -->
+    <div class="cart-summary">
+        <h2>주문 요약</h2>
+        <p>총 상품 금액: <span id="totalPrice" th:text="'₩' + ${totalPrice}">0원</span></p>
+        <p>배송비: <span>무료</span></p>
+        <p>총 결제 금액: <span id="finalPrice" th:text="'₩' + ${totalPrice}">0원</span></p>
+        <button class="checkout-btn" onclick="checkout()">구매하기</button>
+    </div>
+</div>
+
+<script>
+    // 페이지가 로드될 때 총 금액을 계산
+    document.addEventListener("DOMContentLoaded", updateTotal);
+
+    // 선택된 항목의 총 금액을 계산하고 업데이트하는 함수
+    function updateTotal() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        let totalPrice = 0;
+
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                totalPrice += parseInt(checkbox.getAttribute('data-price'));
+            }
+        });
+
+        document.getElementById("totalPrice").innerText = '₩' + totalPrice.toLocaleString();
+        document.getElementById("finalPrice").innerText = '₩' + totalPrice.toLocaleString();
+    }
+
+    // 장바구니에서 아이템을 삭제하는 기능
+    function removeItem(itemId) {
+        // Ajax 호출로 서버에 요청하여 아이템을 장바구니에서 삭제
+    }
+
+    function checkout() {
+        // 결제하기 로직 추가
+    }
+</script>
+
+</body>
+</html>

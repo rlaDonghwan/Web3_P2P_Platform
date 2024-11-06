@@ -12,5 +12,5 @@ public class EthereumController {
     public String sendEtherPage() {
         return "sendEther"; // .html 확장자는 생략
     }
-
+    //------------------------------------------------------------------------------------------------------------------
 }

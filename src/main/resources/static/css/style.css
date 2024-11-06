@@ -153,6 +153,7 @@ body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* 더 강한 그림자를 추가하여 입체감 제공 */
     display: none; /* 기본적으로 팝업은 숨김 처리 */
     text-align: center; /* 중앙 정렬로 정리 */
+    z-index: 1000; /* 높은 우선순위 */
 }
 
 /* 팝업 콘텐츠 스타일 */
