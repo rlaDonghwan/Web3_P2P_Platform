@@ -47,11 +47,11 @@ public class UserController {
 
     // 로그인 상태 확인 요청 처리
     @GetMapping("/auth/check-login-status")
-    public ResponseEntity<?> checkLoginStatus() {
-        Boolean isLoggedIn = (Boolean) httpSession.getAttribute("isLoggedIn");
-        String balance = (String) httpSession.getAttribute("balance");
+    public ResponseEntity<?> checkLoginStatus(HttpSession session) {
+        Boolean isLoggedIn = (Boolean) session.getAttribute("isLoggedIn");
 
         if (Boolean.TRUE.equals(isLoggedIn)) {
+            String balance = (String) session.getAttribute("balance");
             Map<String, String> response = new HashMap<>();
             response.put("isLoggedIn", "true");
             response.put("balance", balance);

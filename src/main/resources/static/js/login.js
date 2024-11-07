@@ -113,12 +113,12 @@ async function checkLoginStatus() {
         const response = await fetch('/auth/check-login-status');
         const data = await response.json();
 
-        // 로그인 상태가 true인 경우 잔액을 표시하고, false이면 로그인 버튼을 표시
         if (data.isLoggedIn === "true") {
             document.getElementById('loginButton').style.display = 'none';
             document.getElementById('balanceDisplay').style.display = 'flex';
             document.getElementById('ethBalance').textContent = `${data.balance}`;
         } else {
+            alert("세션이 만료되었습니다. 다시 로그인 해주세요.");
             document.getElementById('loginButton').style.display = 'block';
             document.getElementById('balanceDisplay').style.display = 'none';
         }

@@ -120,7 +120,6 @@
 <body>
 
 <div th:insert="~{nav.html}"></div>
-
 <div th:insert="~{popup.html}"></div>
 
 <section class="product-detail">
@@ -143,8 +142,15 @@
         <span class="price" th:text="'₩' + ${item.price}">₩가격</span>
         <button class="button cart-button" th:onclick="'addToCart(' + ${item.itemId} + ')'" data-item-id="[[${item.itemId}]]">장바구니 담기</button>
         <button class="button buy-button">바로 구매</button>
+
+        <!-- 본인 소유의 상품인 경우 수정 및 삭제 버튼 추가 -->
+        <div th:if="${item.ownerId == userId}">
+            <button class="button edit-button" onclick="editProduct()">수정</button>
+            <button class="button delete-button" onclick="deleteProduct()">삭제</button>
+        </div>
     </div>
 </section>
+
 
 <script>
     let currentSlideIndex = 0;
@@ -191,6 +197,32 @@
                 console.error('Error adding to cart:', error);
                 alert("장바구니 추가 중 오류가 발생했습니다.");
             });
+    }
+
+    function editProduct() {
+        const itemId = /*[[${item.itemId}]]*/ 'itemId';
+        window.location.href = `/product/edit/${itemId}`;
+    }
+
+    function deleteProduct() {
+        const itemId = /*[[${item.itemId}]]*/ 'itemId';
+        if (confirm("정말로 이 상품을 삭제하시겠습니까?")) {
+            fetch(`/product/delete/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("상품 삭제 실패");
+                    alert("상품이 삭제되었습니다.");
+                    window.location.href = "/";
+                })
+                .catch(error => {
+                    console.error('Error deleting product:', error);
+                    alert("상품 삭제 중 오류가 발생했습니다.");
+                });
+        }
     }
 </script>
 

@@ -3,6 +3,7 @@ package com.inhatc.SafeCommerce.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +21,12 @@ public class Item {
     private int price; // 가격
     private int quantity; // 수량
 
+    // images 필드를 MultipartFile로 변경
+    @Transient // 데이터베이스에 저장되지 않도록 설정
+    private List<MultipartFile> images = new ArrayList<>();
+
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ItemImage> images = new ArrayList<>();
+    private List<ItemImage> itemImages = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id") // User와의 외래키 설정

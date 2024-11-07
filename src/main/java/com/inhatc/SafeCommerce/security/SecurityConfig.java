@@ -36,7 +36,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll()
-                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/**", "/cart/**").permitAll()
+                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/*", "/cart/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
 
@@ -55,6 +55,4 @@ public class SecurityConfig {
 
         return http.build(); // 보안 필터 체인을 반환
     }
-
-
 }
