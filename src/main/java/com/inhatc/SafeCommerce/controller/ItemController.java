@@ -61,4 +61,5 @@ public class ItemController {
         redirectAttributes.addFlashAttribute("successMessage", "상품이 성공적으로 등록되었습니다.");
         return "redirect:/home"; // 상품 등록 후 홈 페이지로 리다이렉트
     }
+    //------------------------------------------------------------------------------------------------------------------
 }

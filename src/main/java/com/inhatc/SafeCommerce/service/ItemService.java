@@ -27,6 +27,7 @@ public class ItemService {
     public Optional<User> findUserById(Long userId) {
         return userRepository.findById(userId);
     }
+    //------------------------------------------------------------------------------------------------------------------
 
     // 상품과 이미지 데이터를 저장
     public void saveItem(Item item, MultipartFile[] imageData) throws IOException {
@@ -44,5 +45,6 @@ public class ItemService {
         item.setImages(images); // Item에 이미지 리스트 설정
         itemRepository.save(item); // Item 엔티티를 저장
     }
+    //------------------------------------------------------------------------------------------------------------------
 }
 

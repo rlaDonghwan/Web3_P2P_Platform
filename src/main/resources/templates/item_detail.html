@@ -6,7 +6,7 @@
     <title>상품 상세 정보</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        /* 스타일링 */
+        /* 기본 스타일링 */
         .product-detail {
             display: flex;
             flex-direction: column;
@@ -32,7 +32,7 @@
             border-radius: 8px;
         }
 
-        /* 슬라이드 버튼 */
+        /* 슬라이드 버튼 스타일 */
         .slide-button {
             position: absolute;
             top: 50%;
@@ -59,6 +59,7 @@
             background-color: rgba(0, 0, 0, 0.8);
         }
 
+        /* 상품 정보 스타일 */
         .product-info {
             text-align: center;
             width: 100%;
@@ -76,7 +77,7 @@
             color: #666;
         }
 
-        /* 가격, 장바구니, 구매하기 버튼 */
+        /* 가격 및 액션 버튼 스타일 */
         .product-actions {
             display: flex;
             align-items: center;
@@ -115,6 +116,61 @@
         .buy-button:hover {
             background-color: #c2185b;
         }
+
+        .action-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            background-color: #f9f9f9;
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .action-icon:hover {
+            background-color: #ececec;
+            transform: scale(1.1);
+        }
+
+        .dots-icon {
+            font-weight: bold;
+            color: #666;
+        }
+
+        /* 드롭다운 메뉴 */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            z-index: 1000;
+            min-width: 100px;
+        }
+
+        .dropdown-menu button {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: white;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 16px;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-menu button:hover {
+            background-color: #f7f7f7;
+        }
     </style>
 </head>
 <body>
@@ -123,7 +179,16 @@
 <div th:insert="~{popup.html}"></div>
 
 <section class="product-detail">
+    <div th:if="${item.user.id == userId}" class="action-icon" onclick="toggleDropdownMenu()" style="position: absolute; top: 70px; right: 350px;">
+        •••
+        <div class="dropdown-menu" id="dropdownMenu">
+            <button onclick="editProduct()">수정</button>
+            <button onclick="deleteProduct()">삭제</button>
+        </div>
+    </div>
+
     <h2 th:text="${item.itemName}">상품 이름</h2>
+
 
     <!-- 슬라이드 이미지 표시 -->
     <div class="product-detail-image">
@@ -142,17 +207,12 @@
         <span class="price" th:text="'₩' + ${item.price}">₩가격</span>
         <button class="button cart-button" th:onclick="'addToCart(' + ${item.itemId} + ')'" data-item-id="[[${item.itemId}]]">장바구니 담기</button>
         <button class="button buy-button">바로 구매</button>
-
-        <!-- 본인 소유의 상품인 경우 수정 및 삭제 버튼 추가 -->
-        <div th:if="${item.ownerId == userId}">
-            <button class="button edit-button" onclick="editProduct()">수정</button>
-            <button class="button delete-button" onclick="deleteProduct()">삭제</button>
-        </div>
     </div>
+
 </section>
 
-
 <script>
+    // 슬라이드 초기화
     let currentSlideIndex = 0;
     const slides = document.querySelectorAll('.product-detail-image img');
 
@@ -175,6 +235,7 @@
     // 초기 슬라이드 표시
     showSlide(currentSlideIndex);
 
+    // 장바구니에 상품 추가
     function addToCart(itemId) {
         fetch(`/cart/add?itemId=${itemId}`, {
             method: 'POST',
@@ -194,16 +255,33 @@
                 }
             })
             .catch(error => {
-                console.error('Error adding to cart:', error);
+                console.error('장바구니 추가 중 오류가 발생했습니다:', error);
                 alert("장바구니 추가 중 오류가 발생했습니다.");
             });
     }
 
+    // 드롭다운 메뉴 토글
+    function toggleDropdownMenu() {
+        const menu = document.getElementById('dropdownMenu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 메뉴 외부 클릭 시 닫기
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('dropdownMenu');
+        const actionIcon = document.querySelector('.action-icon');
+        if (!actionIcon.contains(event.target) && dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // 상품 수정
     function editProduct() {
         const itemId = /*[[${item.itemId}]]*/ 'itemId';
         window.location.href = `/product/edit/${itemId}`;
     }
 
+    // 상품 삭제
     function deleteProduct() {
         const itemId = /*[[${item.itemId}]]*/ 'itemId';
         if (confirm("정말로 이 상품을 삭제하시겠습니까?")) {
@@ -219,11 +297,20 @@
                     window.location.href = "/";
                 })
                 .catch(error => {
-                    console.error('Error deleting product:', error);
+                    console.error('상품 삭제 중 오류가 발생했습니다:', error);
                     alert("상품 삭제 중 오류가 발생했습니다.");
                 });
         }
     }
+
+    // 메뉴 외부 클릭 시 닫기
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('dropdownMenu');
+        const actionIcon = document.querySelector('.action-icon');
+        if (!actionIcon.contains(event.target) && dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        }
+    });
 </script>
 
 </body>
