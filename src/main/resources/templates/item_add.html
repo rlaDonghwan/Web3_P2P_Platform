@@ -89,7 +89,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         .nav {
             width: 100vw; /* Cover full viewport width */
             display: flex;
@@ -101,6 +100,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             box-sizing: border-box; /* Ensure padding doesn't affect layout */
         }
+
     </style>
 </head>
 <body>
@@ -112,9 +112,7 @@
     <h1>상품 등록</h1>
 
     <!-- 상품 등록 폼 -->
-    <form id="itemForm" action="/addItem" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="userId" value="${session.userId}"> <!-- 사용자 ID를 세션에서 가져온다고 가정 -->
-
+    <form id="itemForm" action="/addItem" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         <label for="itemName">상품 이름:</label>
         <input type="text" id="itemName" name="itemName" required>
 
@@ -127,9 +125,10 @@
         <label for="quantity">수량:</label>
         <input type="number" id="quantity" name="quantity" required>
 
-        <label for="images">이미지 업로드:</label>
-        <input type="file" id="images" name="images" accept="image/*" multiple required>
+        <label for="imageData">이미지 업로드:</label>
+        <input type="file" id="imageData" name="imageData" accept="image/*" multiple required onchange="previewImages(event)">
 
+        <!-- 여러 이미지 미리보기를 위한 컨테이너 -->
         <div class="image-preview" id="imagePreviewContainer"></div>
 
         <button type="submit">상품 등록</button>
@@ -138,37 +137,38 @@
 
 <script th:src="@{/js/login.js}"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const imageInput = document.getElementById('images');
-        const previewContainer = document.getElementById('imagePreviewContainer');
-
+    document.addEventListener('DOMContentLoaded', () => {
         // 이미지 미리보기 함수
         function previewImages(event) {
+            const previewContainer = document.getElementById('imagePreviewContainer');
             previewContainer.innerHTML = ""; // 기존 미리보기 초기화
 
-            Array.from(event.target.files).forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement("img");
-                    img.src = e.target.result;
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // 폼 제출 시 이미지 업로드 필수 확인 함수
-        function validateForm(event) {
-            const files = imageInput.files;
-            if (files.length === 0) {
-                alert("이미지를 업로드해주세요.");
-                event.preventDefault(); // 폼 제출 막기
+            const files = event.target.files;
+            if (files) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
         }
 
-        imageInput.addEventListener("change", previewImages);
-        document.getElementById("itemForm").addEventListener("submit", validateForm);
+        document.getElementById('imageData').addEventListener('change', previewImages);
     });
+
+    // 폼 제출 시 이미지 업로드 필수 확인 함수
+    function validateForm() {
+        const imageInput = document.getElementById('imageData');
+        if (imageInput.files.length === 0) {
+            alert("상품 이미지를 업로드해주세요."); // 경고 메시지
+            return false; // 폼 제출 방지
+        }
+        return true; // 폼 제출 허용
+    }
 </script>
 
 </body>
