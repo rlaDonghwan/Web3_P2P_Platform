@@ -27,6 +27,7 @@ public class ItemController {
     public String addItemForm() {
         return "item_add";
     }
+    //------------------------------------------------------------------------------------------------------------------
 
     // 상품 추가 메서드
     @PostMapping("/addItem")

@@ -29,6 +29,7 @@ public class SecurityConfig {
         // ProviderManager에 MetaMaskAuthenticationProvider를 추가하여 사용자 인증 처리
         return new ProviderManager(List.of(metaMaskAuthenticationProvider));
     }
+    //------------------------------------------------------------------------------------------------------------------
 
     // SecurityFilterChain Bean 정의 (Spring Security의 보안 설정)
     @Bean
@@ -36,7 +37,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll()
-                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/*", "/cart/**").permitAll()
+                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/*", "/cart/**","sendEther").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
 
@@ -55,4 +56,5 @@ public class SecurityConfig {
 
         return http.build(); // 보안 필터 체인을 반환
     }
+    //------------------------------------------------------------------------------------------------------------------
 }

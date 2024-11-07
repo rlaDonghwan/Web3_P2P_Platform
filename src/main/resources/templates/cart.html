@@ -1,77 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>장바구니</title>
-    <style>
-        /* 장바구니 스타일 */
-        .cart-container {
-            display: flex;
-            flex-direction: row; /* 좌우 배치 */
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .cart-items {
-            width: 70%;
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .cart-summary {
-            width: 30%;
-            padding: 20px;
-            margin-left: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .cart-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .cart-item img {
-            width: 80px;
-            height: 80px;
-            margin-right: 15px;
-            border-radius: 8px;
-        }
-
-        .cart-item-details {
-            flex: 1;
-        }
-
-        .cart-item-price, .cart-item-quantity {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #777;
-        }
-
-        .checkout-btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            width: 100%;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        .checkout-btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/cart_sytle.css}">
 </head>
 <body>
 <div class="cart-container">

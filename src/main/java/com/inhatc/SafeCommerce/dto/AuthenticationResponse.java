@@ -1,5 +1,10 @@
 package com.inhatc.SafeCommerce.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class AuthenticationResponse {
     private String message;
     private String address;
@@ -9,19 +14,4 @@ public class AuthenticationResponse {
         this.address = address;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
 }
