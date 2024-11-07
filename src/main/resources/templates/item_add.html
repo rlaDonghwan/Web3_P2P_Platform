@@ -112,7 +112,7 @@
     <h1>상품 등록</h1>
 
     <!-- 상품 등록 폼 -->
-    <form id="itemForm" action="/addItem/${session.userId}" method="post" enctype="multipart/form-data">
+    <form id="itemForm" action="/addItem" method="post" enctype="multipart/form-data">
         <input type="hidden" name="userId" value="${session.userId}"> <!-- 사용자 ID를 세션에서 가져온다고 가정 -->
 
         <label for="itemName">상품 이름:</label>

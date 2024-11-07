@@ -30,7 +30,7 @@ public class ItemController {
 
     @GetMapping("/addItem")
     public String addItemForm() {
-        return "add_item";
+        return "item_add";
     }
 
     @PostMapping("/addItem")
@@ -38,14 +38,12 @@ public class ItemController {
                           @RequestParam("imageData") MultipartFile[] imageData,
                           HttpSession session,
                           RedirectAttributes redirectAttributes) {
-        // 세션에서 로그인된 사용자 ID를 가져옵니다.
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "로그인이 필요합니다.");
             return "redirect:/login"; // 로그인 페이지로 리다이렉트
         }
 
-        // User를 찾아서 Item에 설정합니다.
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "사용자를 찾을 수 없습니다.");
@@ -53,7 +51,6 @@ public class ItemController {
         }
         item.setUser(user);
 
-        // 이미지 데이터를 저장합니다.
         List<ItemImage> images = new ArrayList<>();
         try {
             for (MultipartFile file : imageData) {
@@ -70,7 +67,7 @@ public class ItemController {
             return "redirect:/addItem";
         }
 
-        item.setImages(images); // Item에 이미지 리스트 설정
+        item.setImages(images);
         itemRepository.save(item); // Item 엔티티를 저장
 
         redirectAttributes.addFlashAttribute("successMessage", "상품이 성공적으로 등록되었습니다.");
