@@ -108,17 +108,27 @@ async function saveBalanceToServer(balance) {
 }
 
 // 서버에서 로그인 상태를 확인하여 버튼 및 잔액 표시를 업데이트하는 함수
+// 서버에서 로그인 상태를 확인하여 버튼 및 잔액 표시를 업데이트하는 함수
 async function checkLoginStatus() {
     try {
         const response = await fetch('/auth/check-login-status');
         const data = await response.json();
 
         if (data.isLoggedIn === "true") {
+            // 로그인 상태라면 버튼과 잔액 표시 업데이트
             document.getElementById('loginButton').style.display = 'none';
             document.getElementById('balanceDisplay').style.display = 'flex';
             document.getElementById('ethBalance').textContent = `${data.balance}`;
+
+            // 로그아웃 상태 메시지 초기화
+            localStorage.removeItem('loggedOut'); // 로그아웃 상태 초기화
         } else {
-            alert("세션이 만료되었습니다. 다시 로그인 해주세요.");
+            // 로그아웃 상태일 때
+            if (!localStorage.getItem('loggedOut')) {
+                alert("로그아웃 되었습니다. 다시 로그인 해주세요.");
+                localStorage.setItem('loggedOut', 'true'); // 로그아웃 상태 저장
+            }
+
             document.getElementById('loginButton').style.display = 'block';
             document.getElementById('balanceDisplay').style.display = 'none';
         }

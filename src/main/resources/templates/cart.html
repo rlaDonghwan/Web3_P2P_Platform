@@ -5,8 +5,16 @@
     <meta charset="UTF-8">
     <title>장바구니</title>
     <link rel="stylesheet" th:href="@{/css/cart_sytle.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
+
+<div th:insert="~{nav.html}"></div>
+
+<div th:insert="~{popup.html}"></div>
+
+<script th:src="@{/js/login.js}"></script>
+
 <div class="cart-container">
     <div class="cart-items">
         <h2>장바구니 상품</h2>

@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
 
                 .formLogin(form -> form
-                        .loginPage("/login") // 로그인 페이지 경로 설정
+                        .loginPage("/home") // 로그인 페이지 경로 설정
                         .defaultSuccessUrl("/home", true) // 로그인 성공 시 이동할 기본 경로 설정
                         .failureUrl("/login?error=true") // 로그인 실패 시 이동할 경로 설정
                         .permitAll())

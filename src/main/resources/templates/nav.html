@@ -19,7 +19,7 @@
     <div class="menu">
         <a href="/home" id="homeLink">Home</a>
         <a href="#" id="myPageLink">My Page</a>
-        <a href="/cart" id="cartLink">장바구니</a>
+        <a href="#" id="cartLink" onclick="handleCartClick(event)">장바구니</a> <!-- 클릭 이벤트 추가 -->
     </div>
     <button class="login-button" id="loginButton" onclick="login()">Login</button>
     <div class="balance-display" id="balanceDisplay" style="display: none; align-items: center;" onclick="openPopup()">
@@ -29,5 +29,36 @@
     </div>
 </div>
 <script th:src="@{/js/login.js}"></script>
+
+<script>
+    // 로그인 상태 확인 함수
+    async function isUserLoggedIn() {
+        try {
+            const response = await fetch('/auth/check-login-status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+            const data = await response.json();
+            return data.isLoggedIn === "true";
+        } catch (error) {
+            console.error('로그인 상태 확인 중 오류 발생:', error);
+            return false;
+        }
+    }
+
+    // 장바구니 클릭 처리
+    async function handleCartClick(event) {
+        event.preventDefault(); // 기본 링크 동작 막기
+        const isLoggedIn = await isUserLoggedIn();
+
+        if (isLoggedIn) {
+            window.location.href = '/cart'; // 로그인이 되어 있으면 장바구니 페이지로 이동
+        } else {
+            alert('로그인 후 장바구니를 이용하실 수 있습니다.');
+        }
+    }
+</script>
+
 </body>
 </html>
