@@ -127,12 +127,13 @@
         window.location.href = `/product/edit/${itemId}`;
     }
 
-    // 상품 삭제
+
+    // 상품 삭제 함수
     function deleteProduct() {
-        const itemId = /*[[${item.itemId}]]*/ 'itemId';
+        const itemId = [[${item.itemId}]]; // itemId를 실제 값으로 설정
         if (confirm("정말로 이 상품을 삭제하시겠습니까?")) {
-            fetch(`/product/delete/${itemId}`, {
-                method: 'DELETE',
+            fetch(`/delete/${itemId}`, {
+                method: 'POST', // POST로 변경
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -140,7 +141,7 @@
                 .then(response => {
                     if (!response.ok) throw new Error("상품 삭제 실패");
                     alert("상품이 삭제되었습니다.");
-                    window.location.href = "/";
+                    window.location.href = "/home";
                 })
                 .catch(error => {
                     console.error('상품 삭제 중 오류가 발생했습니다:', error);

@@ -6,10 +6,7 @@ import com.inhatc.SafeCommerce.service.ItemService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -63,4 +60,33 @@ public class ItemController {
         return "redirect:/home"; // 상품 등록 후 홈 페이지로 리다이렉트
     }
     //------------------------------------------------------------------------------------------------------------------
+
+    // 상품 삭제 메서드
+    @PostMapping("/delete/{itemId}")
+    public String deleteItem(@PathVariable Long itemId, HttpSession session, RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "로그인이 필요합니다.");
+            return "redirect:/login"; // 로그인 페이지로 리다이렉트
+        }
+
+        Optional<Item> itemOptional = itemService.findItemById(itemId);
+
+        if (itemOptional.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "상품을 찾을 수 없습니다.");
+            return "redirect:/home";
+        }
+
+        Item item = itemOptional.get();
+
+        // 로그인된 사용자와 상품 소유자가 동일한지 확인
+        if (!item.getUser().getId().equals(userId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "상품을 삭제할 권한이 없습니다.");
+            return "redirect:/home";
+        }
+
+        itemService.deleteItemById(itemId);
+        redirectAttributes.addFlashAttribute("successMessage", "상품이 삭제되었습니다.");
+        return "redirect:/home"; // 삭제 후 홈 페이지로 리다이렉트
+    }
 }

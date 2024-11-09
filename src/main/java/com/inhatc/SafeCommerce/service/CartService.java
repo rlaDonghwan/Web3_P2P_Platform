@@ -87,4 +87,9 @@ public class CartService {
         });
     }
     //------------------------------------------------------------------------------------------------------------------
+
+    // 특정 Item ID로 CartItem을 삭제하는 메서드 추가
+    public void deleteCartItemsByItemId(Long itemId) {
+        cartItemRepository.deleteByItem_ItemId(itemId);
+    }
 }
