@@ -65,3 +65,28 @@
 .checkout-btn:hover {
     background-color: #0056b3;
 }
+
+/* 체크박스 스타일 */
+.item-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    accent-color: #007bff; /* 체크박스 색상 */
+    cursor: pointer;
+}
+
+/* 삭제 버튼 스타일 */
+.remove-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.remove-btn:hover {
+    background-color: #ff1a1a; /* 호버 효과 */
+}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 수정</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/item_add_style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+</head>
+<body>
+
+<div th:insert="~{nav.html}"></div>
+
+<div class="content">
+    <h1>상품 수정</h1>
+
+    <form id="itemForm" th:action="@{/editItem/{itemId}(itemId=${item.itemId})}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+        <label for="itemName">상품 이름:</label>
+        <input type="text" id="itemName" name="itemName" th:value="${item.itemName}" required>
+
+        <label for="itemDescription">상품 설명:</label>
+        <textarea id="itemDescription" name="itemDescription" rows="4" required th:text="${item.itemDescription}"></textarea>
+
+        <label for="price">가격:</label>
+        <input type="number" id="price" name="price" th:value="${item.price}" required>
+
+        <label for="quantity">수량:</label>
+        <input type="number" id="quantity" name="quantity" th:value="${item.quantity}" required>
+
+        <label for="imageData">이미지 업로드:</label>
+        <input type="file" id="imageData" name="imageData" accept="image/*" multiple onchange="previewImages(event)">
+
+        <!-- 기존 및 새 이미지 미리보기를 위한 컨테이너 -->
+        <div class="image-preview" id="imagePreviewContainer">
+            <div class="new-images" id="newImagesContainer"></div>
+        </div>
+
+        <button type="submit">상품 수정</button>
+    </form>
+</div>
+
+<script th:src="@{/js/login.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 새로 업로드된 이미지 미리보기 함수
+        function previewImages(event) {
+            const newImagesContainer = document.getElementById('newImagesContainer');
+            newImagesContainer.innerHTML = ""; // 기존 새 이미지 미리보기 초기화
+
+            const files = event.target.files;
+            if (files) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.width = '100px';
+                        img.style.height = 'auto';
+                        img.style.marginRight = '10px';
+                        newImagesContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        document.getElementById('imageData').addEventListener('change', previewImages);
+    });
+
+    // 폼 제출 시 이미지 업로드 필수 확인 함수
+    function validateForm() {
+        const imageInput = document.getElementById('imageData');
+        const existingImages = document.getElementById('existingImagesContainer').children;
+        if (imageInput.files.length === 0 && existingImages.length === 0) {
+            alert("상품 이미지를 업로드해주세요."); // 경고 메시지
+            return false; // 폼 제출 방지
+        }
+        return true; // 폼 제출 허용
+    }
+</script>
+
+</body>
+</html>

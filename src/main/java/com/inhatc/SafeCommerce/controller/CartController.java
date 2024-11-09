@@ -86,6 +86,12 @@ public class CartController {
     }
     //------------------------------------------------------------------------------------------------------------------
 
+    @PostMapping("/delete")
+    @ResponseBody
+    public ResponseEntity<Void> deleteCartItem(@RequestParam Long cartItemId) {
+        cartService.deleteCartItemById(cartItemId);
+        return ResponseEntity.ok().build();
+    }
 
 }
 

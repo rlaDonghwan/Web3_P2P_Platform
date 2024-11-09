@@ -59,6 +59,34 @@ public class ItemService {
     }
     //------------------------------------------------------------------------------------------------------------------
 
+    public void updateItem(Long itemId, Item updatedItem, MultipartFile[] imageData) throws IOException {
+        Optional<Item> existingItemOpt = itemRepository.findById(itemId);
+        if (existingItemOpt.isPresent()) {
+            Item existingItem = existingItemOpt.get();
+
+            // 기본 정보 업데이트
+            existingItem.setItemName(updatedItem.getItemName());
+            existingItem.setItemDescription(updatedItem.getItemDescription());
+            existingItem.setPrice(updatedItem.getPrice());
+            existingItem.setQuantity(updatedItem.getQuantity());
+
+            // 이미지가 새로 업로드된 경우에만 추가
+            if (imageData.length > 0 && !imageData[0].isEmpty()) {
+                // 기존 이미지를 유지하기 위해 초기화하지 않음
+                for (MultipartFile file : imageData) {
+                    if (!file.isEmpty()) {
+                        ItemImage newImage = new ItemImage();
+                        newImage.setImageData(file.getBytes());
+                        newImage.setItem(existingItem);
+                        existingItem.getImages().add(newImage); // 기존 이미지 리스트에 추가
+                    }
+                }
+            }
+
+            itemRepository.save(existingItem);
+        }
+    }
+
     // 상품 삭제 메서드
     public void deleteItemById(Long itemId) {
         // 1. 관련된 CartItem 삭제
