@@ -44,10 +44,14 @@
             <input type="text" id="buyerContact" name="buyerContact" class="form-control" required>
         </div>
 
+        <!-- 이더리움 금액을 저장할 숨겨진 필드 -->
+        <input type="hidden" id="ethAmount" name="ethAmount">
+
         <button type="button" onclick="redirectToSendEther()" class="btn btn-primary btn-block">결제하기</button>
     </form>
 </section>
 
+<!-- 이 코드가 있는 HTML 파일 -->
 <script>
     // 환율 API를 호출하여 ETH 가격을 계산
     const krwPrice = [[${item.price}]]; // KRW 상품 가격
@@ -65,13 +69,14 @@
 
     // 결제하기 버튼을 클릭하면 Send Ether 페이지로 이동
     function redirectToSendEther() {
-        const ethPrice = document.getElementById("ethPrice").innerText;
+        const ethPrice = document.getElementById("ethAmount").value; // 숨겨진 필드의 값 사용
         const buyerName = document.getElementById("buyerName").value;
         const buyerAddress = document.getElementById("buyerAddress").value;
         const buyerContact = document.getElementById("buyerContact").value;
+        const itemId = [[${item.itemId}]]; // 상품 ID
 
         // Send Ether 페이지로 이동
-        window.location.href = `/sendEther?ethPrice=${ethPrice}&buyerName=${encodeURIComponent(buyerName)}&buyerAddress=${encodeURIComponent(buyerAddress)}&buyerContact=${encodeURIComponent(buyerContact)}`;
+        window.location.href = `/sendEther?ethPrice=${ethPrice}&buyerName=${encodeURIComponent(buyerName)}&buyerAddress=${encodeURIComponent(buyerAddress)}&buyerContact=${encodeURIComponent(buyerContact)}&itemId=${itemId}`;
     }
 </script>
 

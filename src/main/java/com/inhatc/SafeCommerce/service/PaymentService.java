@@ -11,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Collections;
-
 @Service
 public class PaymentService {
 
@@ -25,29 +23,31 @@ public class PaymentService {
     @Autowired
     private UserRepository userRepository;
 
-    public String checkAndReserveQuantity(Long itemId, int quantity) {
+    public String checkAndReserveQuantity(Long itemId) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid item ID"));
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 item ID입니다."));
 
-        // 주문할 수량이 충분한지 확인
-        if (item.getQuantity() < quantity) {
+        // 상품 수량이 충분한지 확인
+        if (item.getQuantity() < 1) {
             return "Insufficient quantity";
         }
 
-        // 수량 감소
-        item.setQuantity(item.getQuantity() - quantity);
-        itemRepository.save(item);
-
+        // 수량이 충분하면 결제 진행 가능
         return "Sufficient quantity";
     }
 
     public String processOrder(Long userId, Long itemId, int quantity, String buyerName, String buyerAddress, String buyerContact) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid item ID"));
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 item ID입니다."));
+
+        // 상품 수량이 충분한지 확인
+        if (item.getQuantity() < quantity) {
+            return "상품 수량이 부족합니다.";
+        }
 
         // Order 생성
         Order order = new Order();
-        order.setUser(userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user ID")));
+        order.setUser(userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유효하지 않은 user ID입니다.")));
         order.setOrderDate(LocalDate.now());
         order.setBuyerName(buyerName);
         order.setBuyerAddress(buyerAddress);
@@ -57,12 +57,17 @@ public class PaymentService {
         // OrderItem 생성 및 설정
         OrderItem orderItem = new OrderItem();
         orderItem.setItem(item);
-        orderItem.setOrder(order);
         orderItem.setOrderPrice(item.getPrice());
         orderItem.setCount(quantity);
 
-        // Order와 OrderItem 연결 및 저장
-        order.setOrderItems(Collections.singletonList(orderItem));
+        // Order에 OrderItem 추가
+        order.addOrderItem(orderItem);
+
+        // 상품 수량 감소
+        item.setQuantity(item.getQuantity() - quantity);
+        itemRepository.save(item);
+
+        // Order와 OrderItem 저장
         orderRepository.save(order);
 
         return "Order saved successfully";

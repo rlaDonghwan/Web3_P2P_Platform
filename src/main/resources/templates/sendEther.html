@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>결제 페이지</title>
@@ -10,15 +10,22 @@
 </head>
 <body>
 <div th:insert="~{nav.html}" class="fixed-top"></div>
+<div th:insert="~{popup.html}"></div>
+
+<script th:src="@{/js/login.js}"></script>
 <div class="d-flex justify-content-center align-items-center vh-100" style="padding-top: 80px;">
     <div id="etherForm">
         <button type="button" id="connectButton" onclick="connectMetaMask()" class="btn btn-primary mb-3">메타마스크 연결</button>
+
         <label for="fromAddress">보내는 사람:</label>
         <input type="text" id="fromAddress" name="fromAddress" readonly>
+
         <label for="toAddress">받는 사람:</label>
         <input type="text" id="toAddress" name="toAddress" required>
+
         <label for="amount">수량(이더리움):</label>
         <input type="text" id="amount" name="amount" required>
+
         <button type="button" onclick="sendEther()" class="btn btn-primary mt-3">송금</button>
         <p id="status"></p>
     </div>
@@ -31,21 +38,26 @@
         return urlParams.get(name);
     }
 
+    // 초기화 - URL에서 전달된 이더리움 금액을 amount 필드에 설정
+    document.getElementById("amount").value = getQueryParameter('ethPrice');
+
     // 수량 확인 및 예약 요청 함수
     async function checkAndReserveQuantity() {
-        const itemId = getQueryParameter('itemId');
-        const quantity = document.getElementById("amount").value;
+        const itemId = getQueryParameter('itemId'); // URL에서 itemId를 가져옴
+        if (!itemId) {
+            alert("상품 ID가 필요합니다.");
+            return false;
+        }
 
-        const response = await fetch(`/checkQuantity`, {
+        const response = await fetch(`/api/checkQuantity`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemId, quantity })
+            body: JSON.stringify({ itemId })
         });
 
         const result = await response.text();
-
         if (result === "Insufficient quantity") {
-            alert("죄송합니다, 주문 수량이 부족합니다.");
+            alert("죄송합니다, 상품의 수량이 부족합니다.");
             return false;
         }
         return true; // 수량이 충분하면 송금 진행
@@ -137,31 +149,49 @@
     async function saveOrder() {
         const userId = getUserId(); // 현재 사용자의 ID를 가져오는 함수
         const itemId = getQueryParameter('itemId'); // URL에서 아이템 ID 가져오기
-        const quantity = document.getElementById("amount").value; // 주문 수량
+        const quantity = Number(document.getElementById("amount").value); // 주문 수량 (숫자로 변환)
 
-        // 주문자 정보 가져오기
+        console.log("UserID:", userId); // userId 확인
+        if (!userId) {
+            alert("로그인 정보가 필요합니다.");
+            return;
+        }
+
         const buyerName = document.getElementById("buyerName") ? document.getElementById("buyerName").value : '';
         const buyerAddress = document.getElementById("buyerAddress") ? document.getElementById("buyerAddress").value : '';
         const buyerContact = document.getElementById("buyerContact") ? document.getElementById("buyerContact").value : '';
 
-        // 서버에 주문 저장 요청
-        const response = await fetch(`/process`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, itemId, quantity, buyerName, buyerAddress, buyerContact })
-        });
+        try {
+            const response = await fetch(`/api/process`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, itemId, quantity, buyerName, buyerAddress, buyerContact })
+            });
 
-        const result = await response.text();
-        if (result === "Order saved successfully") {
-            alert("주문이 성공적으로 저장되었습니다.");
-        } else {
-            alert("주문 저장에 실패했습니다.");
+            if (response.ok) {
+                const result = await response.json();
+                if (result.message === "Order saved successfully") {
+                    alert("주문이 성공적으로 저장되었습니다.");
+                    window.location.href = "/home";
+                } else {
+                    console.error("서버 에러 메시지:", result);
+                    alert("에러: " + result.error);
+                }
+            } else {
+                const errorText = await response.text();
+                console.error("서버 에러 응답:", errorText);
+                alert("서버 오류가 발생했습니다. 관리자에게 문의하세요.");
+            }
+        } catch (error) {
+            console.error("요청 중 네트워크 에러 발생:", error);
+            alert("네트워크 오류가 발생했습니다.");
         }
     }
-
     // 예시 사용자 ID 가져오기 (실제로는 서버에서 받아오는 로직으로 대체)
     function getUserId() {
-        return "exampleUserId";
+        const userId = sessionStorage.getItem("userId");
+        console.log("Retrieved UserID from sessionStorage:", userId); // userId 확인용 로그
+        return userId;
     }
 </script>
 </body>

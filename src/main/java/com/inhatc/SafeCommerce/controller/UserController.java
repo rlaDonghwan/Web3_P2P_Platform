@@ -75,7 +75,13 @@ public class UserController {
             setUserSession(user);
 
             logger.info("User session set with Account ID: {}", user.getAccountId());
-            return ResponseEntity.ok("로그인 성공!");
+
+            // 로그인 성공 시 userId를 함께 반환
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("message", "로그인 성공!");
+            responseBody.put("userId", user.getId()); // userId 반환
+
+            return ResponseEntity.ok(responseBody);
         } else {
             return ResponseEntity.badRequest().body("서명 검증 실패");
         }

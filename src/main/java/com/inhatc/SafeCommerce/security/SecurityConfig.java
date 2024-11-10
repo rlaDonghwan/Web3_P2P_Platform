@@ -37,7 +37,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/nonce/*").permitAll()
-                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/*", "/cart/**","/sendEther","/delete/*","/editItem/*","/pay/**","send","process/*").permitAll()
+                        .requestMatchers("/login", "/auth/**", "/home", "/addItem", "/items/*", "/cart/**","/sendEther","/delete/*","/editItem/*","/pay/**","send","/api/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
 
