@@ -2,105 +2,54 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Send Ether</title>
+    <title>결제 페이지</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.5.2/dist/web3.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-
-        #etherForm {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            margin-top: 10px;
-            color: #555;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        button {
-            display: block;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #218838;
-        }
-
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            text-align: center;
-            color: #333;
-        }
-
-        .error {
-            color: #ff4d4f;
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/sendEther.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div id="etherForm">
-    <h2>Send Ether</h2>
-    <button type="button" id="connectButton" onclick="connectMetaMask()">Connect MetaMask</button><br>
-
-    <label for="fromAddress">From Address (MetaMask):</label>
-    <input type="text" id="fromAddress" name="fromAddress" readonly>
-
-    <label for="toAddress">To Address:</label>
-    <input type="text" id="toAddress" name="toAddress" required>
-
-    <label for="amount">Amount (ETH):</label>
-    <input type="text" id="amount" name="amount" required>
-
-    <button type="button" onclick="sendEther()">Send Ether</button>
-
-    <p id="status"></p>
+<div th:insert="~{nav.html}" class="fixed-top"></div>
+<div class="d-flex justify-content-center align-items-center vh-100" style="padding-top: 80px;">
+    <div id="etherForm">
+        <button type="button" id="connectButton" onclick="connectMetaMask()" class="btn btn-primary mb-3">메타마스크 연결</button>
+        <label for="fromAddress">보내는 사람:</label>
+        <input type="text" id="fromAddress" name="fromAddress" readonly>
+        <label for="toAddress">받는 사람:</label>
+        <input type="text" id="toAddress" name="toAddress" required>
+        <label for="amount">수량(이더리움):</label>
+        <input type="text" id="amount" name="amount" required>
+        <button type="button" onclick="sendEther()" class="btn btn-primary mt-3">송금</button>
+        <p id="status"></p>
+    </div>
 </div>
 
 <script>
-    let useMetaMask = true;
+    // URL에서 쿼리 파라미터 가져오기 함수
+    function getQueryParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // 수량 확인 및 예약 요청 함수
+    async function checkAndReserveQuantity() {
+        const itemId = getQueryParameter('itemId');
+        const quantity = document.getElementById("amount").value;
+
+        const response = await fetch(`/checkQuantity`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId, quantity })
+        });
+
+        const result = await response.text();
+
+        if (result === "Insufficient quantity") {
+            alert("죄송합니다, 주문 수량이 부족합니다.");
+            return false;
+        }
+        return true; // 수량이 충분하면 송금 진행
+    }
 
     async function connectMetaMask() {
         if (typeof window.ethereum !== 'undefined') {
@@ -117,60 +66,103 @@
         }
     }
 
+    // 트랜잭션 상태를 확인하는 함수
+    async function checkTransactionStatus(txHash) {
+        const web3 = new Web3(window.ethereum);
+        while (true) {
+            const receipt = await web3.eth.getTransactionReceipt(txHash);
+            if (receipt) {
+                return receipt; // 트랜잭션 상태 반환
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기 후 재확인
+        }
+    }
+
+    // MetaMask와의 송금 트랜잭션 진행 함수
     async function sendEther() {
+        const canProceed = await checkAndReserveQuantity();
+        if (!canProceed) return;
+
         const fromAddress = document.getElementById("fromAddress").value;
         const toAddress = document.getElementById("toAddress").value;
         const amount = document.getElementById("amount").value;
 
         if (!fromAddress || !toAddress || !amount) {
-            document.getElementById("status").innerHTML = "Fill in all fields";
+            document.getElementById("status").innerHTML = "모든 필드를 채워 주세요";
             document.getElementById('status').classList.add('error');
             return;
         }
 
-        if (useMetaMask && typeof window.ethereum !== 'undefined') {
+        if (typeof window.ethereum !== 'undefined') {
             try {
                 const web3 = new Web3(window.ethereum);
-                const gasPrice = await web3.eth.getGasPrice();  // 네트워크에서 동적 가스 가격 가져오기
-                const estimatedGas = await web3.eth.estimateGas({
-                    to: toAddress,
-                    from: fromAddress,
-                    value: web3.utils.toHex(web3.utils.toWei(amount, 'ether')),
-                });
-
                 const transactionParameters = {
                     to: toAddress,
                     from: fromAddress,
-                    value: web3.utils.toHex(web3.utils.toWei(amount, 'ether')),
-                    gas: web3.utils.toHex(estimatedGas), // 추정된 가스 한도 사용
-                    gasPrice: web3.utils.toHex(gasPrice),  // 네트워크에서 받은 가스 가격
+                    value: web3.utils.toHex(web3.utils.toWei(amount, 'ether'))
                 };
 
-                ethereum
-                    .request({
-                        method: 'eth_sendTransaction',
-                        params: [transactionParameters],
-                    })
-                    .then((txHash) => {
+                ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [transactionParameters],
+                })
+                    .then(async (txHash) => {
                         document.getElementById("status").innerHTML = `Transaction Hash: ${txHash}`;
-                        document.getElementById('status').classList.remove('error');
+                        const transactionReceipt = await checkTransactionStatus(txHash);
+
+                        if (transactionReceipt && transactionReceipt.status) {
+                            alert("송금이 완료되었습니다!");
+                            await saveOrder(); // 결제 내역 저장
+                        } else {
+                            alert("트랜잭션이 실패했습니다.");
+                        }
                     })
                     .catch((error) => {
-                        console.log(error); // 전체 에러 객체 출력
+                        console.log(error);
                         document.getElementById("status").innerHTML = `Error: ${error.message}`;
                         document.getElementById('status').classList.add('error');
                     });
             } catch (error) {
-                console.log(error);  // 전체 에러 객체 출력
+                console.log(error);
                 document.getElementById("status").innerHTML = `Error: ${error.message}`;
                 document.getElementById('status').classList.add('error');
             }
         } else {
-            document.getElementById("status").innerHTML = "MetaMask is not installed.";
+            document.getElementById("status").innerHTML = "MetaMask가 설치되어 있지 않습니다.";
             document.getElementById('status').classList.add('error');
         }
     }
 
+    // 결제 내역을 서버에 저장하는 함수
+    async function saveOrder() {
+        const userId = getUserId(); // 현재 사용자의 ID를 가져오는 함수
+        const itemId = getQueryParameter('itemId'); // URL에서 아이템 ID 가져오기
+        const quantity = document.getElementById("amount").value; // 주문 수량
+
+        // 주문자 정보 가져오기
+        const buyerName = document.getElementById("buyerName") ? document.getElementById("buyerName").value : '';
+        const buyerAddress = document.getElementById("buyerAddress") ? document.getElementById("buyerAddress").value : '';
+        const buyerContact = document.getElementById("buyerContact") ? document.getElementById("buyerContact").value : '';
+
+        // 서버에 주문 저장 요청
+        const response = await fetch(`/process`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, itemId, quantity, buyerName, buyerAddress, buyerContact })
+        });
+
+        const result = await response.text();
+        if (result === "Order saved successfully") {
+            alert("주문이 성공적으로 저장되었습니다.");
+        } else {
+            alert("주문 저장에 실패했습니다.");
+        }
+    }
+
+    // 예시 사용자 ID 가져오기 (실제로는 서버에서 받아오는 로직으로 대체)
+    function getUserId() {
+        return "exampleUserId";
+    }
 </script>
 </body>
 </html>

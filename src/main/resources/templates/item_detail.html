@@ -43,7 +43,7 @@
         <span class="price" th:text="'₩' + ${item.price}">₩가격</span>
         <button class="button cart-button" th:onclick="'addToCart(' + ${item.itemId} + ')'"
                 data-item-id="[[${item.itemId}]]">장바구니 담기
-        <button class="button buy-button">바로 구매</button>
+        <button class="button buy-button" onclick="payProduct()">바로 구매</button>
     </div>
 </section>
 
@@ -97,6 +97,13 @@
         const itemId = [[${item.itemId}]];
         window.location.href = `/editItem/${itemId}`;
     }
+
+    function payProduct() {
+        const itemId = [[${item.itemId}]];
+        window.location.href = `/pay/${itemId}`;
+    }
+
+
 
     // 상품 삭제
     function deleteProduct() {

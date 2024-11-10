@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 페이지</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+</head>
+<body>
+
+<div th:insert="~{nav.html}"></div>
+
+<section class="payment-section container mt-5 p-4 shadow rounded">
+    <h2 class="text-center mb-4">결제 정보</h2>
+
+    <div class="product-summary row align-items-center mb-4">
+        <div class="col-md-4 text-center">
+            <img th:src="${item.images != null && item.images.size() > 0 ? item.images[0].base64Image : '/images/default.jpg'}"
+                 alt="Product Image" style="width: 300px; height: 200px; object-fit: cover; margin-bottom: 5px;">
+        </div>
+        <div class="col-md-8">
+            <h3 th:text="${item.itemName}">상품 이름</h3>
+            <p class="mb-1">상품 가격: <span th:text="'₩' + ${item.price}">₩가격</span></p>
+            <p>이더리움 금액: <span id="ethPrice">계산 중...</span> ETH</p>
+        </div>
+    </div>
+
+    <h4>결제 정보 입력</h4>
+    <form id="paymentForm">
+        <div class="form-group">
+            <label for="buyerName">이름:</label>
+            <input type="text" id="buyerName" name="buyerName" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="buyerAddress">주소:</label>
+            <input type="text" id="buyerAddress" name="buyerAddress" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="buyerContact">연락처:</label>
+            <input type="text" id="buyerContact" name="buyerContact" class="form-control" required>
+        </div>
+
+        <button type="button" onclick="redirectToSendEther()" class="btn btn-primary btn-block">결제하기</button>
+    </form>
+</section>
+
+<script>
+    // 환율 API를 호출하여 ETH 가격을 계산
+    const krwPrice = [[${item.price}]]; // KRW 상품 가격
+    const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw';
+
+    fetch(apiURL)
+        .then(response => response.json())
+        .then(data => {
+            const ethToKrwRate = data.ethereum.krw;
+            const ethPrice = krwPrice / ethToKrwRate;
+            document.getElementById("ethPrice").innerText = ethPrice.toFixed(6);
+            document.getElementById("ethAmount").value = ethPrice.toFixed(6); // hidden input에 이더리움 금액 설정
+        })
+        .catch(error => console.error('환율 조회 중 오류:', error));
+
+    // 결제하기 버튼을 클릭하면 Send Ether 페이지로 이동
+    function redirectToSendEther() {
+        const ethPrice = document.getElementById("ethPrice").innerText;
+        const buyerName = document.getElementById("buyerName").value;
+        const buyerAddress = document.getElementById("buyerAddress").value;
+        const buyerContact = document.getElementById("buyerContact").value;
+
+        // Send Ether 페이지로 이동
+        window.location.href = `/sendEther?ethPrice=${ethPrice}&buyerName=${encodeURIComponent(buyerName)}&buyerAddress=${encodeURIComponent(buyerAddress)}&buyerContact=${encodeURIComponent(buyerContact)}`;
+    }
+</script>
+
+</body>
+</html>

@@ -5,12 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 @Controller
-public class EthereumController {
+public class EtherController {
 
     // sendEther.html 페이지 렌더링
-    @GetMapping("/sendEther")
+    @GetMapping("/send")
     public String sendEtherPage() {
-        return "sendEther"; // .html 확장자는 생략
+        return "send"; // .html 확장자는 생략
     }
     //------------------------------------------------------------------------------------------------------------------
 }
