@@ -4,11 +4,13 @@ function openPopup() {
     document.getElementById('walletAddressText').textContent = window.ethereum.selectedAddress;
     document.getElementById('walletBalance').textContent = document.getElementById('ethBalance').textContent;
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 팝업 닫기 함수 - 팝업을 닫습니다.
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 로그인 성공 시 세션 타이머 시작 (30분 유지) - 30분 후 세션 만료 알림을 표시하고 로그인 버튼과 잔액 표시를 초기화합니다.
 function startSessionTimer() {
@@ -18,6 +20,7 @@ function startSessionTimer() {
         document.getElementById('balanceDisplay').style.display = 'none';
     }, 30 * 60 * 1000); // 30분
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // MetaMask를 통한 로그인 함수
 async function login() {
@@ -49,6 +52,7 @@ async function login() {
         console.error('MetaMask 로그인 중 오류:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 서버에서 nonce를 요청하는 함수 - 로그인 시 사용자 인증을 위한 nonce를 가져옵니다.
 async function getNonce(address) {
@@ -60,8 +64,10 @@ async function getNonce(address) {
         console.error('Nonce 가져오는 중 오류:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 로그인 데이터(서명)와 함께 서버에 인증 요청을 전송하는 함수
+// 로그인 데이터 전송 및 sessionStorage에 userId 저장
 async function sendLoginData(address, signature) {
     try {
         const response = await fetch('/auth/login-with-signature', {
@@ -70,15 +76,20 @@ async function sendLoginData(address, signature) {
             body: JSON.stringify({ account: address, signature })
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            alert(`로그인 실패: ${errorText}`);
+        const data = await response.json();
+
+        if (response.ok && data.userId) {
+            sessionStorage.setItem("userId", data.userId); // userId를 세션 스토리지에 저장
+            alert(data.message || "로그인 성공!");
+        } else {
+            alert(`로그인 실패: ${data.error || "알 수 없는 오류"}`);
         }
         return response;
     } catch (error) {
         console.error('로그인 요청 중 오류 발생:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 지갑 주소의 잔액을 가져와 화면에 표시하고 서버에 잔액을 저장하는 함수
 async function displayBalance(address) {
@@ -90,6 +101,7 @@ async function displayBalance(address) {
     // 서버에 잔액 정보를 저장
     await saveBalanceToServer(`${etherBalance} ETH`);
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 서버에 잔액 데이터를 저장하는 함수
 async function saveBalanceToServer(balance) {
@@ -106,8 +118,8 @@ async function saveBalanceToServer(balance) {
         console.error('잔액 저장 중 오류:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
-// 서버에서 로그인 상태를 확인하여 버튼 및 잔액 표시를 업데이트하는 함수
 // 서버에서 로그인 상태를 확인하여 버튼 및 잔액 표시를 업데이트하는 함수
 async function checkLoginStatus() {
     try {
@@ -136,6 +148,7 @@ async function checkLoginStatus() {
         console.error('로그인 상태 확인 중 오류:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------
 
 // 페이지 로드 시 로그인 상태를 확인하여 UI 업데이트
 window.onload = checkLoginStatus;
@@ -162,3 +175,4 @@ async function logout() {
         console.error('로그아웃 중 오류 발생:', error);
     }
 }
+//-------------------------------------------------------------------------------------------------------------------------

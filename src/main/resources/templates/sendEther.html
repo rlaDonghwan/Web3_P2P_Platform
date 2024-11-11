@@ -147,19 +147,18 @@
 
     // 결제 내역을 서버에 저장하는 함수
     async function saveOrder() {
-        const userId = getUserId(); // 현재 사용자의 ID를 가져오는 함수
-        const itemId = getQueryParameter('itemId'); // URL에서 아이템 ID 가져오기
-        const quantity = Number(document.getElementById("amount").value); // 주문 수량 (숫자로 변환)
+        const userId = getUserId();
+        const itemId = getQueryParameter('itemId');
+        const quantity = Number(document.getElementById("amount").value);
 
-        console.log("UserID:", userId); // userId 확인
         if (!userId) {
             alert("로그인 정보가 필요합니다.");
             return;
         }
 
-        const buyerName = document.getElementById("buyerName") ? document.getElementById("buyerName").value : '';
-        const buyerAddress = document.getElementById("buyerAddress") ? document.getElementById("buyerAddress").value : '';
-        const buyerContact = document.getElementById("buyerContact") ? document.getElementById("buyerContact").value : '';
+        const buyerName = document.getElementById("buyerName")?.value || '';
+        const buyerAddress = document.getElementById("buyerAddress")?.value || '';
+        const buyerContact = document.getElementById("buyerContact")?.value || '';
 
         try {
             const response = await fetch(`/api/process`, {
@@ -178,19 +177,20 @@
                     alert("에러: " + result.error);
                 }
             } else {
-                const errorText = await response.text();
-                console.error("서버 에러 응답:", errorText);
-                alert("서버 오류가 발생했습니다. 관리자에게 문의하세요.");
+                const errorDetails = await response.json(); // JSON 에러 응답 파싱
+                console.error("서버 에러 응답:", errorDetails);
+                alert(`서버 오류 발생: ${errorDetails.error || "상세 정보를 확인하세요."}\n${errorDetails.details}`);
             }
         } catch (error) {
             console.error("요청 중 네트워크 에러 발생:", error);
             alert("네트워크 오류가 발생했습니다.");
         }
     }
-    // 예시 사용자 ID 가져오기 (실제로는 서버에서 받아오는 로직으로 대체)
+
+    // 세션에 저장된 userId 가져오기
     function getUserId() {
         const userId = sessionStorage.getItem("userId");
-        console.log("Retrieved UserID from sessionStorage:", userId); // userId 확인용 로그
+        console.log("Retrieved UserID from sessionStorage:", userId);
         return userId;
     }
 </script>
