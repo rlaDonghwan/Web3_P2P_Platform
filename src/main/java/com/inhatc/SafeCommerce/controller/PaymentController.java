@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api") // 필요한 경우 추가
+@RequestMapping("/api")
 public class PaymentController {
 
     @Autowired
@@ -42,7 +42,6 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> processPayment(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // JSON 요청에서 userId, itemId, quantity를 유연하게 변환하여 사용
             Long userId = parseLongValue(requestData.get("userId"));
             Long itemId = parseLongValue(requestData.get("itemId"));
             int quantity = parseIntValue(requestData.get("quantity"));
@@ -50,7 +49,6 @@ public class PaymentController {
             String buyerAddress = (String) requestData.get("buyerAddress");
             String buyerContact = (String) requestData.get("buyerContact");
 
-            // 서비스에서 주문 처리
             String result = paymentService.processOrder(userId, itemId, quantity, buyerName, buyerAddress, buyerContact);
             response.put("message", result);
             return ResponseEntity.ok(response);
@@ -67,7 +65,6 @@ public class PaymentController {
         }
     }
 
-    // Object 타입의 값을 Long 타입으로 변환하는 헬퍼 메서드
     private Long parseLongValue(Object value) {
         if (value instanceof Number) {
             return ((Number) value).longValue();
@@ -78,7 +75,6 @@ public class PaymentController {
         }
     }
 
-    // Object 타입의 값을 int 타입으로 변환하는 헬퍼 메서드
     private int parseIntValue(Object value) {
         if (value instanceof Number) {
             return ((Number) value).intValue();
