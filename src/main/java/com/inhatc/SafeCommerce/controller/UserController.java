@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -111,6 +109,23 @@ public class UserController {
         httpSession.setAttribute("user", user);
         httpSession.setAttribute("userId", user.getId()); // userId도 세션에 저장
         httpSession.setAttribute("isLoggedIn", true);
+    }
+    //------------------------------------------------------------------------------------------------------------------
+
+    //글쓴이 userID찾는 메서드
+    @GetMapping("/api/getAuthorAccount/{itemId}")
+    @ResponseBody
+    public ResponseEntity<?> getAuthorAccount(@PathVariable Long itemId) {
+        Long authorId = userService.findAuthorIdByItemId(itemId); // itemId로 글쓴이 ID 조회
+        if (authorId != null) {
+            UserDTO user = userService.getUserById(authorId);
+            if (user != null && user.getAccountId() != null) {
+                Map<String, String> response = new HashMap<>();
+                response.put("account", user.getAccountId()); // 글쓴이 계좌 주소 반환
+                return ResponseEntity.ok(response);
+            }
+        }
+        return ResponseEntity.status(404).body("작성자를 찾을 수 없습니다.");
     }
     //------------------------------------------------------------------------------------------------------------------
 }

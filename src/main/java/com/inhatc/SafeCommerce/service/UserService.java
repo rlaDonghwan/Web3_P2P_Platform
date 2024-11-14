@@ -2,15 +2,21 @@ package com.inhatc.SafeCommerce.service;
 
 import com.inhatc.SafeCommerce.dto.UserDTO;
 import com.inhatc.SafeCommerce.model.User;
+import com.inhatc.SafeCommerce.repository.ItemRepository;
 import com.inhatc.SafeCommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ItemRepository itemRepository;
 
     // 계정 ID로 사용자를 찾고, 없으면 새 사용자 생성
     public UserDTO findOrCreateUser(String accountId) {
@@ -45,4 +51,17 @@ public class UserService {
     }
     //------------------------------------------------------------------------------------------------------------------
 
+    //User 아이디 찾는 메서드
+    public UserDTO getUserById(Long userId) {
+        Optional<User> user = userRepository.findById(userId);
+        return user.map(this::convertToDTO).orElse(null);
+    }
+    //------------------------------------------------------------------------------------------------------------------
+
+    //글쓴이 userID 조회
+    public Long findAuthorIdByItemId(Long itemId) {
+        // itemId로 글쓴이 userId 조회
+        return itemRepository.findAuthorIdByItemId(itemId);
+    }
+    //------------------------------------------------------------------------------------------------------------------
 }

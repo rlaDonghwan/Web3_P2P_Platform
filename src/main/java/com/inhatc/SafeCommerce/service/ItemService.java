@@ -86,6 +86,7 @@ public class ItemService {
             itemRepository.save(existingItem);
         }
     }
+    //------------------------------------------------------------------------------------------------------------------
 
     // 상품 삭제 메서드
     public void deleteItemById(Long itemId) {
@@ -105,6 +106,6 @@ public class ItemService {
         // 3. 상품 삭제
         itemRepository.deleteById(itemId);
     }
-
+    //------------------------------------------------------------------------------------------------------------------
 }
 
