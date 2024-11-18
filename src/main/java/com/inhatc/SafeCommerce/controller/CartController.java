@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,6 +44,7 @@ public class CartController {
 
         return "cart";
     }
+
     //------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/add")
@@ -56,6 +58,7 @@ public class CartController {
         String message = cartService.addItemToCart(userId, itemId);
         return ResponseEntity.ok(message);
     }
+
     //------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/updateQuantity")
@@ -64,13 +67,8 @@ public class CartController {
         String cartItemIdStr = data.get("cartItemId");
         String quantityStr = data.get("quantity");
 
-        // 디버깅 로그 추가
-        System.out.println("Received cartItemId: " + cartItemIdStr);
-        System.out.println("Received quantity: " + quantityStr);
-
         if (cartItemIdStr == null || cartItemIdStr.isEmpty() || quantityStr == null || quantityStr.isEmpty()) {
-            System.out.println("유효하지 않은 요청입니다: cartItemId 또는 quantity가 비어 있습니다.");
-            return ResponseEntity.badRequest().build();  // 잘못된 요청 응답 반환
+            return ResponseEntity.badRequest().build();
         }
 
         try {
@@ -78,12 +76,12 @@ public class CartController {
             int quantity = Integer.parseInt(quantityStr);
             cartService.updateCartItemQuantity(cartItemId, quantity);
         } catch (NumberFormatException e) {
-            System.out.println("Number format exception 발생: " + e.getMessage());
-            return ResponseEntity.badRequest().build();  // 형식이 잘못된 경우 잘못된 요청 응답 반환
+            return ResponseEntity.badRequest().build();
         }
 
         return ResponseEntity.ok().build();
     }
+
     //------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/delete")
@@ -93,5 +91,19 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
-}
+    //------------------------------------------------------------------------------------------------------------------
 
+    @PostMapping("/checkout")
+    @ResponseBody
+    public ResponseEntity<String> checkout(@RequestBody Map<String, Object> requestData, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        List<Map<String, Object>> items = (List<Map<String, Object>>) requestData.get("items");
+        session.setAttribute("checkoutItems", items); // 선택한 상품 정보를 세션에 저장
+
+        return ResponseEntity.ok("결제 준비 완료");
+    }
+}

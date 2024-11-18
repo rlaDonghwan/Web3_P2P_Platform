@@ -24,14 +24,16 @@ public class PaymentService {
     @Autowired
     private UserRepository userRepository;
 
-    public String checkAndReserveQuantity(Long itemId) {
+    public String checkAndReserveQuantity(Long itemId, int requestedQuantity) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 item ID입니다."));
 
-        if (item.getQuantity() < 1) {
-            return "Insufficient quantity";
+        if (item.getQuantity() < requestedQuantity) {
+            return "상품 수량이 부족합니다.";
         }
-        return "Sufficient quantity";
+
+        // 수량이 충분하면 예약 처리 (예약은 단순 확인으로 가정)
+        return "수량이 충분합니다.";
     }
 
     public String processOrder(Long userId, Long itemId, int quantity, String buyerName, String buyerAddress, String buyerContact) {
@@ -42,8 +44,10 @@ public class PaymentService {
             return "상품 수량이 부족합니다.";
         }
 
+        // 주문 생성
         Order order = new Order();
-        order.setUser(userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유효하지 않은 user ID입니다.")));
+        order.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 user ID입니다.")));
         order.setOrderDate(LocalDate.now());
         order.setBuyerName(buyerName);
         order.setBuyerAddress(buyerAddress);
@@ -52,17 +56,20 @@ public class PaymentService {
 
         OrderItem orderItem = new OrderItem();
         orderItem.setItem(item);
-        orderItem.setOrder(order); // Order와 OrderItem 관계 설정
-        orderItem.setOrderPrice(item.getPrice());
+        orderItem.setOrder(order);
+        orderItem.setOrderPrice(item.getPrice() * quantity); // 총 가격 계산
         orderItem.setCount(quantity);
 
+        // 관계 설정
         order.addOrderItem(orderItem);
 
+        // 상품 수량 감소
         item.setQuantity(item.getQuantity() - quantity);
         itemRepository.save(item);
 
+        // 주문 저장
         orderRepository.save(order);
 
-        return "Order saved successfully";
+        return "구매가 성공적으로 처리되었습니다.";
     }
 }
