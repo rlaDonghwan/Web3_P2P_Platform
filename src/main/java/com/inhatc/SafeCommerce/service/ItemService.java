@@ -88,9 +88,8 @@ public class ItemService {
     }
     //------------------------------------------------------------------------------------------------------------------
 
-    // 상품 삭제 메서드
     public void deleteItemById(Long itemId) {
-        // 1. 관련된 CartItem 삭제
+        // 1. 장바구니에서 해당 상품과 연관된 항목 삭제
         cartService.deleteCartItemsByItemId(itemId);
 
         // 2. 상품에 연결된 이미지를 먼저 삭제

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -46,22 +47,22 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> processPayment(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Long userId = Long.valueOf(requestData.get("userId").toString());
-            Long itemId = Long.valueOf(requestData.get("itemId").toString());
-            int quantity = Integer.parseInt(requestData.get("quantity").toString());
-            String buyerName = requestData.get("buyerName").toString();
-            String buyerAddress = requestData.get("buyerAddress").toString();
-            String buyerContact = requestData.get("buyerContact").toString();
+            Long userId = parseLongValue(requestData.get("userId"));
+            List<Map<String, Object>> items = (List<Map<String, Object>>) requestData.get("items");
+            String buyerName = (String) requestData.get("buyerName");
+            String buyerAddress = (String) requestData.get("buyerAddress");
+            String buyerContact = (String) requestData.get("buyerContact");
 
-            String result = paymentService.processOrder(userId, itemId, quantity, buyerName, buyerAddress, buyerContact);
-
-            if (result.equals("상품 수량이 부족합니다.")) {
-                response.put("message", result);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
+            // PaymentService의 processOrder 호출
+            String result = paymentService.processOrder(userId, items, buyerName, buyerAddress, buyerContact);
 
             response.put("message", result);
             return ResponseEntity.ok(response);
+
+        } catch (ClassCastException | NumberFormatException e) {
+            response.put("error", "형변환 중 오류 발생 - 요청 데이터의 데이터 타입이 잘못되었습니다.");
+            response.put("details", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 
         } catch (Exception e) {
             response.put("error", "주문 처리 중 오류 발생");

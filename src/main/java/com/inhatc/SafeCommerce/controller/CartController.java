@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 @Controller
 @RequestMapping("/cart")
 public class CartController {
@@ -45,8 +46,6 @@ public class CartController {
         return "cart";
     }
 
-    //------------------------------------------------------------------------------------------------------------------
-
     @PostMapping("/add")
     @ResponseBody
     public ResponseEntity<String> addToCart(@RequestParam Long itemId, HttpSession session) {
@@ -59,30 +58,30 @@ public class CartController {
         return ResponseEntity.ok(message);
     }
 
-    //------------------------------------------------------------------------------------------------------------------
-
     @PostMapping("/updateQuantity")
     @ResponseBody
-    public ResponseEntity<Void> updateQuantity(@RequestBody Map<String, String> data) {
+    public ResponseEntity<String> updateQuantity(@RequestBody Map<String, String> data) {
         String cartItemIdStr = data.get("cartItemId");
         String quantityStr = data.get("quantity");
 
         if (cartItemIdStr == null || cartItemIdStr.isEmpty() || quantityStr == null || quantityStr.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("유효하지 않은 요청입니다.");
         }
 
         try {
             Long cartItemId = Long.parseLong(cartItemIdStr);
             int quantity = Integer.parseInt(quantityStr);
-            cartService.updateCartItemQuantity(cartItemId, quantity);
+            String message = cartService.updateCartItemQuantity(cartItemId, quantity);
+
+            if (message.equals("재고 수량을 초과하는 요청입니다.")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            }
+
+            return ResponseEntity.ok("장바구니 상품 수량이 업데이트되었습니다.");
         } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("형식 오류가 발생했습니다.");
         }
-
-        return ResponseEntity.ok().build();
     }
-
-    //------------------------------------------------------------------------------------------------------------------
 
     @PostMapping("/delete")
     @ResponseBody
@@ -91,19 +90,41 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
-    //------------------------------------------------------------------------------------------------------------------
-
     @PostMapping("/checkout")
     @ResponseBody
-    public ResponseEntity<String> checkout(@RequestBody Map<String, Object> requestData, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> checkout(@RequestBody Map<String, Object> requestData, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "로그인이 필요합니다."));
         }
 
         List<Map<String, Object>> items = (List<Map<String, Object>>) requestData.get("items");
-        session.setAttribute("checkoutItems", items); // 선택한 상품 정보를 세션에 저장
+        boolean allItemsAvailable = true;
 
-        return ResponseEntity.ok("결제 준비 완료");
+        for (Map<String, Object> item : items) {
+            Long cartItemId = Long.valueOf(item.get("cartItemId").toString());
+            int quantity = Integer.parseInt(item.get("quantity").toString());
+
+            // 수량 확인
+            Optional<CartItem> cartItemOptional = cartService.getCartItemById(cartItemId);
+            if (cartItemOptional.isPresent()) {
+                CartItem cartItem = cartItemOptional.get();
+                if (cartItem.getItem().getQuantity() < quantity) {
+                    allItemsAvailable = false;
+                    return ResponseEntity.ok(Map.of("success", false, "message", "수량이 부족한 상품이 있습니다: " + cartItem.getItem().getItemName()));
+                }
+            } else {
+                allItemsAvailable = false;
+                return ResponseEntity.ok(Map.of("success", false, "message", "유효하지 않은 장바구니 상품입니다."));
+            }
+        }
+
+        // 모든 상품의 수량이 충분하면 결제를 진행
+        if (allItemsAvailable) {
+            session.setAttribute("checkoutItems", items); // 세션에 선택된 상품 저장
+            return ResponseEntity.ok(Map.of("success", true, "message", "결제 준비 완료"));
+        } else {
+            return ResponseEntity.ok(Map.of("success", false, "message", "결제 실패: 수량 부족"));
+        }
     }
 }

@@ -31,36 +31,38 @@ public class PayController {
         } else {
             return "error"; // 에러 페이지로 이동
         }
-        return "pay_detail"; // 결제 페이지로 이동
+        return "pay_detail"; // 결제 상세 페이지로 이동
     }
 
     @GetMapping("/sendEther")
     public String sendEtherPage(
-            @RequestParam String ethPrice,        // 이더리움 가격
-            @RequestParam String buyerName,       // 구매자 이름
-            @RequestParam String buyerAddress,    // 구매자 주소
-            @RequestParam String buyerContact,    // 구매자 연락처
-            @RequestParam int quantity,           // 구매 수량
-            @RequestParam Long itemId,            // 상품 ID
+            @RequestParam String ethPrice,
+            @RequestParam String buyerName,
+            @RequestParam String buyerAddress,
+            @RequestParam String buyerContact,
+            @RequestParam int quantity,
+            @RequestParam Long itemId,
             Model model) {
 
-        // 상품 정보를 데이터베이스에서 가져옴
+        // 상품 정보 가져오기
         Optional<Item> itemOptional = itemRepository.findById(itemId);
         if (itemOptional.isPresent()) {
             Item item = itemOptional.get();
 
-            // 전달받은 정보를 모델에 추가
+            // 상품 정보 추가
             model.addAttribute("itemName", item.getItemName());
-            model.addAttribute("totalPrice", item.getPrice() * quantity); // 총 가격 계산
+            model.addAttribute("itemId", itemId);
+            model.addAttribute("itemPrice", item.getPrice());
+            model.addAttribute("quantity", quantity);
+            model.addAttribute("totalPrice", item.getPrice() * quantity); // 총 금액
         }
 
-        // 모델에 구매 정보 추가
+        // 구매 정보 추가
         model.addAttribute("ethPrice", ethPrice);
         model.addAttribute("buyerName", buyerName);
         model.addAttribute("buyerAddress", buyerAddress);
         model.addAttribute("buyerContact", buyerContact);
-        model.addAttribute("quantity", quantity);
 
-        return "sendEther"; // sendEther 템플릿으로 이동
+        return "sendEther"; // 결제 페이지로 이동
     }
 }

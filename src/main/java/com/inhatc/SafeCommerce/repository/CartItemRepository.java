@@ -8,4 +8,5 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Transactional
     void deleteByItem_ItemId(Long itemId); // `item` 필드에서 `id`를 참조하도록 수정
+
 }
