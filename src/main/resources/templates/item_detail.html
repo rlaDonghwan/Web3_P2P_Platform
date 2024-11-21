@@ -8,11 +8,13 @@
     <link rel="stylesheet" th:href="@{/css/item_detail_style.css}">
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </head>
-<body>
 
+
+<body>
 <div th:insert="~{nav.html}"></div>
 <div th:insert="~{popup.html}"></div>
 <script th:src="@{/js/login.js}"></script>
+<script th:src="@{/js/item_detail.js}"></script>
 
 <section class="product-detail">
     <div th:if="${item.user.id == userId}" class="action-icon" onclick="toggleDropdownMenu()"
@@ -41,14 +43,125 @@
     <!-- 가격 및 액션 버튼 -->
     <div class="product-actions">
         <span class="price" th:text="'₩' + ${item.price}">₩가격</span>
-        <button class="button cart-button" th:onclick="'addToCart(' + ${item.itemId} + ')'"
-                data-item-id="[[${item.itemId}]]">장바구니 담기
-        <button class="button buy-button" onclick="payProduct()">바로 구매</button>
+        <button class="button cart-button" type="button" th:data-item-id="${item.itemId}" onclick="addToCart(this)">
+            장바구니 담기
+        </button>
+        <button class="button buy-button" type="button" th:data-item-id="${item.itemId}" onclick="payProduct(this)">
+            바로 구매
+        </button>
     </div>
 </section>
 
-<script th:src="@{/js/item_detail.js}"></script>
+<script>
+    // 슬라이드 기능 초기화
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.product-detail-image img');
 
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.style.display = i === index ? 'block' : 'none';
+        });
+    }
+
+    function changeSlide(direction) {
+        currentSlideIndex += direction;
+        if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
+        else if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
+        showSlide(currentSlideIndex);
+    }
+
+    showSlide(currentSlideIndex); // 초기 슬라이드 표시
+
+    // 장바구니 추가
+    function addToCart(button) {
+        const itemId = button.getAttribute('data-item-id'); // 데이터 속성에서 itemId를 가져옵니다.
+        console.log("장바구니에 추가할 itemId:", itemId);
+
+        fetch(`/cart/add?itemId=${itemId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include'
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    alert("로그인이 필요합니다. 홈 화면으로 이동합니다.");
+                    window.location.href = "/home";
+                    throw new Error("로그인이 필요합니다.");
+                }
+                if (!response.ok) throw new Error("장바구니 추가 실패");
+                return response.text();
+            })
+            .then(message => {
+                alert(message);
+                if (confirm("장바구니에 담았습니다. 장바구니로 이동하시겠습니까?")) {
+                    window.location.href = "/cart";
+                }
+            })
+            .catch(error => console.error('장바구니 추가 중 오류:', error));
+    }
+
+    function payProduct(button) {
+        const itemId = button.getAttribute('data-item-id');
+        window.location.href = `/pay/${itemId}`;
+    }
+
+    // 상품 수정 페이지로 이동
+    function editProduct() {
+        const itemId = [[${item.itemId}]];
+        window.location.href = `/editItem/${itemId}`;
+    }
+
+
+    // 상품 삭제
+    function deleteProduct() {
+        const itemId = [[${item.itemId}]];
+        if (confirm("정말로 이 상품을 삭제하시겠습니까?")) {
+            fetch(`/delete/${itemId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("상품 삭제 실패");
+                    alert("상품이 삭제되었습니다.");
+                    window.location.href = "/home";
+                })
+                .catch(error => {
+                    console.error('상품 삭제 중 오류:', error);
+                    alert("상품 삭제 중 오류가 발생했습니다.");
+                });
+        }
+    }
+
+    // 드롭다운 메뉴 토글
+    function toggleDropdownMenu() {
+        const menu = document.getElementById('dropdownMenu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 메뉴 외부 클릭 시 드롭다운 닫기
+    document.addEventListener('DOMContentLoaded', () => {
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.product-detail-image img');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.style.display = i === index ? 'block' : 'none';
+            });
+        }
+
+        function changeSlide(direction) {
+            currentSlideIndex += direction;
+            if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
+            else if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
+            showSlide(currentSlideIndex);
+        }
+
+        showSlide(currentSlideIndex); // 초기 슬라이드 표시
+
+        document.querySelector('.prev-button').addEventListener('click', () => changeSlide(-1));
+        document.querySelector('.next-button').addEventListener('click', () => changeSlide(1));
+    });
+</script>
 
 </body>
 </html>

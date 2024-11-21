@@ -125,50 +125,31 @@
         }
     }
 
-    async function goToCheckout() {
-        const canProceed = await checkAndReserveQuantity(); // 수량 확인
-        if (!canProceed) return;
-
-        const fromAddress = document.getElementById("fromAddress").value;
-        const toAddress = document.getElementById("toAddress").value;
-        const amount = document.getElementById("amount").value;
-
-        if (!fromAddress || !toAddress || !amount) {
-            document.getElementById("status").innerHTML = "모든 필드를 채워 주세요";
-            return;
-        }
-
-        if (typeof window.ethereum !== 'undefined') {
-            try {
-                const web3 = new Web3(window.ethereum);
-                const transactionParameters = {
-                    to: toAddress,
-                    from: fromAddress,
-                    value: web3.utils.toHex(web3.utils.toWei(amount, 'ether'))
-                };
-
-                const txHash = await ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [transactionParameters],
-                });
-
-                document.getElementById("status").innerHTML = `Transaction Hash: ${txHash}`;
-                const receipt = await checkTransactionStatus(txHash);
-
-                if (receipt && receipt.status) {
-                    alert("송금이 완료되었습니다!");
-                    await saveOrder(); // 결제 내역 저장
-                } else {
-                    alert("트랜잭션이 실패했습니다.");
+    function goToCheckout() {
+        fetch('/cart/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("서버 응답 오류");
                 }
-            } catch (error) {
-                console.error("트랜잭션 중 오류 발생:", error);
-                document.getElementById("status").innerHTML = `Error: ${error.message}`;
-            }
-        } else {
-            document.getElementById("status").innerHTML = "MetaMask가 설치되어 있지 않습니다.";
-        }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // 결제 페이지로 이동
+                    window.location.href = '/cart/pay';
+                } else {
+                    alert(data.message || '결제 준비 중 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('결제 준비 중 오류 발생:', error);
+                alert('결제 준비 중 오류가 발생했습니다.');
+            });
     }
+
 </script>
 </body>
 </html>

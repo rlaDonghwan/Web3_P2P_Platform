@@ -12,10 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 
 @Controller
 @RequestMapping("/cart")
@@ -35,9 +33,8 @@ public class CartController {
         if (cartOptional.isPresent()) {
             Cart cart = cartOptional.get();
             model.addAttribute("cartItems", cart.getCartItems());
-            model.addAttribute("totalPrice", cart.getCartItems().stream().mapToInt(
-                    cartItem -> cartItem.getPrice() * cartItem.getQuantity()).sum()
-            );
+            model.addAttribute("totalPrice", cart.getCartItems().stream()
+                    .mapToInt(cartItem -> cartItem.getPrice() * cartItem.getQuantity()).sum());
         } else {
             model.addAttribute("cartItems", new ArrayList<CartItem>());
             model.addAttribute("totalPrice", 0);
@@ -64,7 +61,7 @@ public class CartController {
         String cartItemIdStr = data.get("cartItemId");
         String quantityStr = data.get("quantity");
 
-        if (cartItemIdStr == null || cartItemIdStr.isEmpty() || quantityStr == null || quantityStr.isEmpty()) {
+        if (cartItemIdStr == null || quantityStr == null || cartItemIdStr.isEmpty() || quantityStr.isEmpty()) {
             return ResponseEntity.badRequest().body("유효하지 않은 요청입니다.");
         }
 
@@ -92,39 +89,24 @@ public class CartController {
 
     @PostMapping("/checkout")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> checkout(@RequestBody Map<String, Object> requestData, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> checkout(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "로그인이 필요합니다."));
         }
 
-        List<Map<String, Object>> items = (List<Map<String, Object>>) requestData.get("items");
-        boolean allItemsAvailable = true;
-
-        for (Map<String, Object> item : items) {
-            Long cartItemId = Long.valueOf(item.get("cartItemId").toString());
-            int quantity = Integer.parseInt(item.get("quantity").toString());
-
-            // 수량 확인
-            Optional<CartItem> cartItemOptional = cartService.getCartItemById(cartItemId);
-            if (cartItemOptional.isPresent()) {
-                CartItem cartItem = cartItemOptional.get();
-                if (cartItem.getItem().getQuantity() < quantity) {
-                    allItemsAvailable = false;
-                    return ResponseEntity.ok(Map.of("success", false, "message", "수량이 부족한 상품이 있습니다: " + cartItem.getItem().getItemName()));
-                }
-            } else {
-                allItemsAvailable = false;
-                return ResponseEntity.ok(Map.of("success", false, "message", "유효하지 않은 장바구니 상품입니다."));
-            }
+        Optional<Cart> cartOptional = cartService.getCartByUserId(userId);
+        if (cartOptional.isEmpty() || cartOptional.get().getCartItems().isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", false, "message", "장바구니가 비어 있습니다."));
         }
 
-        // 모든 상품의 수량이 충분하면 결제를 진행
-        if (allItemsAvailable) {
-            session.setAttribute("checkoutItems", items); // 세션에 선택된 상품 저장
-            return ResponseEntity.ok(Map.of("success", true, "message", "결제 준비 완료"));
-        } else {
-            return ResponseEntity.ok(Map.of("success", false, "message", "결제 실패: 수량 부족"));
-        }
+        Cart cart = cartOptional.get();
+        int totalPrice = cart.getCartItems().stream()
+                .mapToInt(item -> item.getPrice() * item.getQuantity()).sum();
+
+        session.setAttribute("checkoutCart", cart);
+        session.setAttribute("totalPrice", totalPrice);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "결제 준비 완료", "totalPrice", totalPrice));
     }
 }

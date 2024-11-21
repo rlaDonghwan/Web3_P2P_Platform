@@ -28,4 +28,9 @@ public class Cart {
         cartItems.add(cartItem);
         cartItem.setCart(this);
     }
+
+    public void removeItem(CartItem cartItem) {
+        cartItems.remove(cartItem);
+        cartItem.setCart(null);
+    }
 }

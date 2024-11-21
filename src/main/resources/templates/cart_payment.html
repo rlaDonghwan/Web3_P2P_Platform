@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장바구니 결제</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.5.2/dist/web3.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="mb-4">장바구니 결제</h2>
+
+    <!-- 판매자별 상품 -->
+    <div th:each="entry : ${sellerItemsMap}" class="mb-3 p-3 border rounded">
+        <div th:each="cartItem : ${entry.value}">
+            <p>상품명: <span th:text="${cartItem.item.itemName}">상품 이름</span></p>
+            <p>수량: <span th:text="${cartItem.quantity}">0</span></p>
+            <p>가격: <span th:text="'₩' + ${cartItem.price * cartItem.quantity}">₩0</span></p>
+        </div>
+        <p>판매자 총 금액: <span th:text="'₩' + ${sellerTotals[entry.key]}">₩0</span></p>
+    </div>
+
+    <h3>총 금액: <span th:text="'₩' + ${totalPrice}">₩0</span></h3>
+    <p>이더리움 금액: <span id="ethPrice">계산 중...</span> ETH</p>
+
+    <!-- 추가 정보 입력 -->
+    <form id="paymentForm">
+        <div class="form-group">
+            <label for="buyerName">이름</label>
+            <input type="text" id="buyerName" class="form-control" placeholder="구매자 이름을 입력하세요" required>
+        </div>
+        <div class="form-group">
+            <label for="buyerAddress">주소</label>
+            <input type="text" id="buyerAddress" class="form-control" placeholder="배송 주소를 입력하세요" required>
+        </div>
+        <div class="form-group">
+            <label for="buyerContact">연락처</label>
+            <input type="text" id="buyerContact" class="form-control" placeholder="연락처를 입력하세요" required>
+        </div>
+        <button id="payButton" type="button" class="btn btn-primary btn-block mt-3" onclick="payWithSmartContract()">
+            결제하기
+        </button>
+    </form>
+</div>
+
+<script th:inline="javascript">
+    const totalPrice = /*[[${totalPrice}]]*/ 0; // 서버에서 제공되는 총 금액 (KRW)
+    const sellers = /*[[${sellerItemsJson}]]*/ []; // 판매자 목록 (JSON 직렬화된 데이터)
+    const sellerAmounts = /*[[${sellerAmountsJson}]]*/ []; // 판매자별 금액 (JSON 직렬화된 데이터)
+    const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw';
+
+    const env = {
+        CONTRACT_ADDRESS: /*[[${contractAddress}]]*/,
+        INFURA_API_KEY: /*[[${infuraApiKey}]]*/
+    };
+
+    if (!env.CONTRACT_ADDRESS || !env.INFURA_API_KEY) {
+        console.error("Contract Address or Infura API Key is missing");
+        alert("결제를 처리할 수 없습니다. 관리자에게 문의하세요.");
+        throw new Error("Missing environment variables");
+    }
+
+    const web3Provider = `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`;
+    const web3 = new Web3(new Web3.providers.HttpProvider(web3Provider));
+
+    // 계약 초기화
+    let contract;
+    fetch('/smartContract/ContractABI.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load ABI: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(abi => {
+            contract = new web3.eth.Contract(abi, env.CONTRACT_ADDRESS);
+            console.log("Contract initialized:", contract);
+        })
+        .catch(error => console.error('ABI 로드 중 오류:', error));
+
+    fetch(apiURL)
+        .then(response => response.json())
+        .then(data => {
+            const ethToKrwRate = data.ethereum.krw;
+            document.getElementById('ethPrice').innerText = (totalPrice / ethToKrwRate).toFixed(6);
+        })
+        .catch(error => console.error('환율 조회 중 오류:', error));
+
+    async function payWithSmartContract() {
+        try {
+            // 입력값 가져오기
+            const buyerName = document.getElementById("buyerName").value;
+            const buyerAddress = document.getElementById("buyerAddress").value;
+            const buyerContact = document.getElementById("buyerContact").value;
+
+            // 입력값 유효성 검사
+            if (!buyerName || !buyerAddress || !buyerContact) {
+                alert("모든 필수 정보를 입력하세요.");
+                return;
+            }
+
+            const accounts = await web3.eth.getAccounts();
+            const buyer = accounts[0];
+
+            const sellerAddresses = sellers.map(seller => seller.accountId);
+            const sellerAmountsInWei = sellerAmounts.map(amount =>
+                web3.utils.toWei((amount / ethToKrwRate).toFixed(6), 'ether')
+            );
+
+            const orderId = await contract.methods.createOrder(sellerAddresses, sellerAmountsInWei)
+                .send({from: buyer});
+            console.log("Order created with ID:", orderId);
+
+            const totalAmountInWei = web3.utils.toWei((totalPrice / ethToKrwRate).toFixed(6), 'ether');
+            await contract.methods.payOrder(orderId).send({from: buyer, value: totalAmountInWei});
+            console.log("Payment successful!");
+
+            await contract.methods.distributeFunds(orderId).send({from: buyer});
+            console.log("Funds distributed successfully!");
+
+            // 결제 성공 시 알림 및 홈 화면 이동
+            alert("결제가 성공적으로 완료되었습니다.");
+            window.location.href = '/'; // 홈 화면으로 리디렉션
+        } catch (error) {
+            console.error("결제 처리 중 오류:", error);
+            alert("결제 중 오류가 발생했습니다.");
+        }
+    }
+</script>
+</body>
+</html>
