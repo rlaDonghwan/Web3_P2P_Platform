@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>장바구니 결제</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.5.2/dist/web3.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/sendEther.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div class="container mt-5">
-    <h2 class="mb-4">장바구니 결제</h2>
+    <div th:insert="~{nav.html}" class="fixed-top"></div>
+    <div th:insert="~{popup.html}"></div>
+    <script th:src="@{/js/login.js}"></script>
+
 
     <!-- 판매자별 상품 -->
     <div th:each="entry : ${sellerItemsMap}" class="mb-3 p-3 border rounded">
         <h5 th:text="'판매자: ' + ${entry.key.accountId.substring(0, 10)}">판매자 이름</h5>
         <div th:each="cartItem : ${entry.value}">
+            <img th:src="${cartItem.item.images != null && cartItem.item.images.size() > 0 ? cartItem.item.images[0].base64Image : '/images/default.jpg'}"
+                 alt="상품 이미지" style="width: 100px; height: 100px; object-fit: cover; margin-right: 10px;">
             <p>상품명: <span th:text="${cartItem.item.itemName}">상품 이름</span></p>
             <p>수량: <span th:text="${cartItem.quantity}">0</span></p>
             <p>가격: <span th:text="'₩' + (${cartItem.price} * ${cartItem.quantity})">₩0</span></p>
@@ -25,25 +31,34 @@
     <h3>총 금액: <span th:text="'₩' + ${totalPrice}">₩0</span></h3>
     <p>이더리움 금액: <span id="ethPrice">계산 중...</span> ETH</p>
 
-    <!-- 결제 버튼 -->
-    <button id="payButton" class="btn btn-primary btn-block mt-3">결제하기</button>
+    <!-- 결제 정보 입력 -->
+    <h4>결제 정보 입력</h4>
+    <form id="paymentForm">
+        <div class="form-group">
+            <label for="buyerName">이름:</label>
+            <input type="text" id="buyerName" name="buyerName" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="buyerAddress">주소:</label>
+            <input type="text" id="buyerAddress" name="buyerAddress" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="buyerContact">연락처:</label>
+            <input type="text" id="buyerContact" name="buyerContact" class="form-control" required>
+        </div>
+
+        <!-- 이더리움 금액을 저장할 숨겨진 필드 -->
+        <input type="hidden" id="ethAmount" name="ethAmount">
+
+        <button type="button" onclick="submitPayment()" class="btn btn-primary btn-block">결제하기</button>
+    </form>
 </div>
 
 <script>
-    // JavaScript에 Thymeleaf 데이터 전달
     const totalPrice = [[${totalPrice}]]; // 총 금액
-    const sellers = [[${sellerItemsJson}]]; // 판매자 정보 JSON
-    const sellerAmounts = [[${sellerAmountsJson}]]; // 판매자별 금액 JSON
-    const contractAddress = '[[${contractAddress}]]'; // 스마트 컨트랙트 주소
-    const infuraApiKey = '[[${infuraApiKey}]]'; // Infura API 키
     const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw';
-
-    if (!contractAddress || !infuraApiKey) {
-        alert("결제를 처리할 수 없습니다. 관리자에게 문의하세요.");
-        throw new Error("스마트 컨트랙트 주소 또는 Infura API 키가 누락되었습니다.");
-    }
-
-    const web3 = new Web3(`https://sepolia.infura.io/v3/${infuraApiKey}`);
     let ethToKrwRate = 1406; // 기본 환율: 1406원
 
     // 환율 조회 함수
@@ -56,121 +71,66 @@
             const data = await response.json();
             if (data.ethereum && data.ethereum.krw) {
                 ethToKrwRate = data.ethereum.krw;
-                console.log("ETH to KRW rate:", ethToKrwRate);
+                console.log("ETH to KRW rate updated:", ethToKrwRate);
             }
         } catch (error) {
             console.error("환율 조회 중 오류:", error);
-            alert("환율 조회 실패: 기본 환율(₩1406)을 사용합니다.");
         } finally {
-            updatePrices();
+            updateEthPrice();
         }
     }
 
-
-
-    // 스마트 컨트랙트 초기화 함수
-    async function initializeContract() {
-        try {
-            const response = await fetch('/smartContract/ContractABI.json');
-            const abi = await response.json();
-            console.log("Smart contract ABI loaded:", abi);
-
-            return new web3.eth.Contract(abi, contractAddress);
-        } catch (error) {
-            console.error("스마트 컨트랙트 초기화 오류:", error);
-            alert("스마트 컨트랙트 초기화 실패");
-            return null;
-        }
+    // 이더리움 금액 업데이트
+    function updateEthPrice() {
+        const ethPrice = totalPrice / ethToKrwRate;
+        document.getElementById('ethPrice').innerText = ethPrice.toFixed(6);
+        document.getElementById('ethAmount').value = ethPrice.toFixed(6); // 숨겨진 필드 업데이트
+        console.log("Updated ETH Price:", ethPrice.toFixed(6));
     }
 
-    // 결제 처리 함수
-    async function handlePayment(contract) {
-        try {
-            const accounts = await web3.eth.requestAccounts(); // 사용자 계정 요청
-            const buyer = accounts[0]; // 구매자 주소 설정
-            console.log("Buyer account:", buyer);
+    // 결제 정보 제출 함수
+    async function submitPayment() {
+        const buyerName = document.getElementById('buyerName').value;
+        const buyerAddress = document.getElementById('buyerAddress').value;
+        const buyerContact = document.getElementById('buyerContact').value;
+        const ethAmount = document.getElementById('ethAmount').value;
 
-            if (!sellers.length || !sellerAmounts.length) {
-                alert("판매자 정보가 없습니다.");
-                return;
+        // 서버로 결제 데이터 전송
+        try {
+            const response = await fetch('/payment/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    buyerName,
+                    buyerAddress,
+                    buyerContact,
+                    ethAmount,
+                    totalPrice
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`서버 오류: ${errorText}`);
             }
 
-            console.log("Sellers:", sellers);
-            console.log("Seller Amounts:", sellerAmounts);
-
-            // 판매자 주소와 금액을 설정
-            const sellerAddresses = sellers.map(seller => seller.accountId);
-            const sellerAmountsInWei = sellerAmounts.map(amount =>
-                web3.utils.toWei((amount / ethToKrwRate).toFixed(6), 'ether') // 이더리움으로 변환
-            );
-
-            console.log("Seller Addresses:", sellerAddresses);
-            console.log("Seller Amounts in Wei:", sellerAmountsInWei);
-
-            // 주문 생성
-            const orderId = await contract.methods
-                .createOrder(sellerAddresses, sellerAmountsInWei)
-                .send({ from: buyer });
-
-            console.log("Order ID:", orderId);
-
-            const totalAmountInWei = web3.utils.toWei(
-                (totalPrice / ethToKrwRate).toFixed(6),
-                'ether'
-            );
-
-            console.log("Total Amount in Wei:", totalAmountInWei);
-
-            // 주문 결제
-            await contract.methods
-                .payOrder(orderId)
-                .send({ from: buyer, value: totalAmountInWei });
-
-            console.log("Payment successful");
-
-            // 자금 분배
-            await contract.methods.distributeFunds(orderId).send({ from: buyer });
-            console.log("Funds distributed successfully");
-
-            alert("결제가 성공적으로 완료되었습니다!");
-            window.location.href = '/'; // 결제 완료 후 리다이렉트
+            alert('결제가 성공적으로 완료되었습니다!');
+            window.location.href = '/'; // 결제 완료 후 메인 페이지로 이동
         } catch (error) {
-            console.error("결제 처리 중 오류:", error);
-            alert("결제 처리 실패: " + error.message);
+            console.error('결제 처리 중 오류:', error);
+            alert('결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
         }
     }
 
-    // DOMContentLoaded에서 초기화 및 결제 버튼 이벤트 설정
-    document.addEventListener("DOMContentLoaded", async () => {
-        console.log("Page loaded. Setting up payment functionality...");
-        await fetchExchangeRate();
+    // DOMContentLoaded에서 환율 조회 및 자동 갱신 설정
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Fetching ETH to KRW exchange rate...');
+        fetchExchangeRate();
 
-        const contract = await initializeContract();
-        if (contract) {
-            document.getElementById("payButton").addEventListener("click", async () => {
-                console.log("Payment button clicked.");
-                try {
-                    if (!window.ethereum) {
-                        alert("MetaMask가 설치되지 않았습니다. 설치 후 다시 시도해주세요.");
-                        return;
-                    }
-
-                    const accounts = await web3.eth.requestAccounts();
-                    if (!accounts || accounts.length === 0) {
-                        alert("MetaMask 계정 연결이 필요합니다.");
-                        return;
-                    }
-
-                    console.log("Buyer account:", accounts[0]);
-                    await handlePayment(contract);
-                } catch (error) {
-                    console.error("Error during payment process:", error);
-                    alert("결제 중 오류가 발생했습니다: " + error.message);
-                }
-            });
-        } else {
-            console.error("Contract initialization failed.");
-        }
+        // 5분마다 환율 자동 갱신
+        setInterval(fetchExchangeRate, 300000); // 300,000ms = 5분
     });
 </script>
 </body>
