@@ -1,5 +1,6 @@
 package com.inhatc.SafeCommerce.service;
 
+import com.google.gson.Gson;
 import com.inhatc.SafeCommerce.model.Cart;
 import com.inhatc.SafeCommerce.model.CartItem;
 import com.inhatc.SafeCommerce.model.Item;
@@ -12,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CartService {
@@ -29,6 +33,11 @@ public class CartService {
     @Autowired
     private UserRepository userRepository;
 
+    private final Gson gson = new Gson(); // JSON 변환을 위한 Gson 객체
+
+    /**
+     * 사용자 ID를 기반으로 장바구니를 조회합니다.
+     */
     public Optional<Cart> getCartByUserId(Long userId) {
         Optional<Cart> cartOptional = cartRepository.findByUserId(userId);
         cartOptional.ifPresent(cart -> cart.getCartItems().forEach(cartItem -> {
@@ -42,6 +51,9 @@ public class CartService {
         return cartOptional;
     }
 
+    /**
+     * 장바구니에 상품을 추가합니다.
+     */
     public String addItemToCart(Long userId, Long itemId) {
         Optional<User> userOptional = userRepository.findById(userId);
         Optional<Item> itemOptional = itemRepository.findById(itemId);
@@ -85,6 +97,9 @@ public class CartService {
         return "장바구니에 상품이 추가되었습니다.";
     }
 
+    /**
+     * 장바구니 상품의 수량을 업데이트합니다.
+     */
     public String updateCartItemQuantity(Long cartItemId, int quantity) {
         Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
         if (cartItemOptional.isEmpty()) {
@@ -94,7 +109,7 @@ public class CartService {
         CartItem cartItem = cartItemOptional.get();
         Item item = cartItem.getItem();
 
-        if (quantity > item.getQuantity()) { // 수량 확인
+        if (quantity > item.getQuantity()) {
             return "재고 수량을 초과하는 요청입니다.";
         }
 
@@ -103,18 +118,47 @@ public class CartService {
         return "장바구니 상품 수량이 업데이트되었습니다.";
     }
 
-    // 특정 Item ID로 관련된 CartItem 삭제
-    public void deleteCartItemsByItemId(Long itemId) {
-        cartItemRepository.deleteByItem_ItemId(itemId);
-    }
-
-    // 장바구니 항목 삭제
+    /**
+     * 장바구니에서 특정 상품을 삭제합니다.
+     */
     public void deleteCartItemById(Long cartItemId) {
         cartItemRepository.deleteById(cartItemId);
     }
 
-    // 장바구니 항목을 ID로 가져오기
-    public Optional<CartItem> getCartItemById(Long cartItemId) {
-        return cartItemRepository.findById(cartItemId);
+    /**
+     * 판매자별로 장바구니 상품을 그룹화하여 반환합니다.
+     */
+    public Map<String, List<Map<String, Object>>> getSellerItems(List<CartItem> cartItems) {
+        return cartItems.stream()
+                .collect(Collectors.groupingBy(
+                        item -> {
+                            String accountId = item.getItem().getUser().getAccountId();
+                            return accountId.length() > 10 ? accountId.substring(0, 10) : accountId;
+                        },
+                        Collectors.mapping(
+                                cartItem -> Map.of(
+                                        "itemId", cartItem.getItem().getItemId(),
+                                        "itemName", cartItem.getItem().getItemName(),
+                                        "price", cartItem.getPrice(),
+                                        "quantity", cartItem.getQuantity()
+                                ),
+                                Collectors.toList()
+                        )
+                ));
+    }
+
+    /**
+     * 판매자별 장바구니 상품 데이터를 JSON 문자열로 변환하여 반환합니다.
+     */
+    public String getSellerItemsAsJson(List<CartItem> cartItems) {
+        Map<String, List<Map<String, Object>>> sellerItems = getSellerItems(cartItems);
+        return gson.toJson(sellerItems); // JSON 문자열로 변환 후 반환
+    }
+
+    /**
+     * 특정 상품 ID를 기준으로 장바구니 상품을 삭제합니다.
+     */
+    public void deleteCartItemsByItemId(Long itemId) {
+        cartItemRepository.deleteByItem_ItemId(itemId);
     }
 }

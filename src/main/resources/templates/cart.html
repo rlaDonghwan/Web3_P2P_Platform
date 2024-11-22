@@ -132,7 +132,11 @@
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error("서버 응답 오류");
+                    return response.text().then(text => {
+                        // HTML 응답을 처리
+                        console.error("서버 응답 오류:", text);
+                        throw new Error("서버에서 에러 응답을 반환했습니다.");
+                    });
                 }
                 return response.json();
             })

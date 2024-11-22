@@ -1,11 +1,15 @@
 package com.inhatc.SafeCommerce.controller;
 
+import com.inhatc.SafeCommerce.dto.DTOConverter;
+import com.inhatc.SafeCommerce.dto.UserDTO;
 import com.inhatc.SafeCommerce.model.Cart;
 import com.inhatc.SafeCommerce.model.CartItem;
 import com.inhatc.SafeCommerce.model.Item;
 import com.inhatc.SafeCommerce.model.User;
+import com.inhatc.SafeCommerce.repository.CartRepository;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -23,7 +27,9 @@ public class PayController {
     @Autowired
     private ItemRepository itemRepository;
 
-    // 프로퍼티에서 값 읽기
+    @Autowired
+    private CartRepository cartRepository;
+
     @Value("${CONTRACT_ADDRESS}")
     private String contractAddress;
 
@@ -36,14 +42,14 @@ public class PayController {
         if (itemOptional.isPresent()) {
             Item item = itemOptional.get();
             item.getImages().forEach(image -> {
-                String base64Image = "data:image/png;base64," + Base64Utils. encodeToString(image.getImageData());
+                String base64Image = "data:image/png;base64," + Base64Utils.encodeToString(image.getImageData());
                 image.setBase64Image(base64Image);
             });
             model.addAttribute("item", item);
         } else {
-            return "error"; // 에러 페이지로 이동
+            return "error";
         }
-        return "pay_detail"; // 결제 상세 페이지로 이동
+        return "pay_detail";
     }
 
     @GetMapping("/sendEther")
@@ -56,58 +62,66 @@ public class PayController {
             @RequestParam Long itemId,
             Model model) {
 
-        // 상품 정보 가져오기
         Optional<Item> itemOptional = itemRepository.findById(itemId);
         if (itemOptional.isPresent()) {
             Item item = itemOptional.get();
-
-            // 상품 정보 추가
             model.addAttribute("itemName", item.getItemName());
             model.addAttribute("itemId", itemId);
             model.addAttribute("itemPrice", item.getPrice());
             model.addAttribute("quantity", quantity);
-            model.addAttribute("totalPrice", item.getPrice() * quantity); // 총 금액
+            model.addAttribute("totalPrice", item.getPrice() * quantity);
         }
 
-        // 구매 정보 추가
         model.addAttribute("ethPrice", ethPrice);
         model.addAttribute("buyerName", buyerName);
         model.addAttribute("buyerAddress", buyerAddress);
         model.addAttribute("buyerContact", buyerContact);
 
-        return "sendEther"; // 결제 페이지로 이동
+        return "sendEther";
     }
 
-
     @GetMapping("/cart/pay")
+    @Transactional
     public String cartPayPage(HttpSession session, Model model) {
-        Cart cart = (Cart) session.getAttribute("checkoutCart");
+        // 세션에서 cartId와 totalPrice 가져오기
+        Long cartId = (Long) session.getAttribute("cartId");
         Integer totalPrice = (Integer) session.getAttribute("totalPrice");
 
-        if (cart == null || totalPrice == null) {
-            return "redirect:/cart"; // 세션이 비어 있으면 장바구니 페이지로 이동
+        // 디버깅 로그 추가
+        if (cartId == null || totalPrice == null) {
+            System.out.println("Session cartId or totalPrice is missing.");
+            return "redirect:/cart";
         }
 
-        Map<User, List<CartItem>> sellerItemsMap = new HashMap<>();
-        Map<User, Integer> sellerTotals = new HashMap<>();
+        // Cart 정보 가져오기
+        Cart cart = cartRepository.findCartWithDetails(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
+
+        Map<UserDTO, List<CartItem>> sellerItemsMap = new HashMap<>();
+        Map<UserDTO, Integer> sellerTotals = new HashMap<>();
 
         for (CartItem cartItem : cart.getCartItems()) {
             User seller = cartItem.getItem().getUser();
-            sellerItemsMap.computeIfAbsent(seller, k -> new ArrayList<>()).add(cartItem);
+            UserDTO sellerDTO = DTOConverter.convertToDTO(seller);
 
-            int sellerTotal = sellerTotals.getOrDefault(seller, 0);
+            sellerItemsMap.computeIfAbsent(sellerDTO, k -> new ArrayList<>()).add(cartItem);
+
+            int sellerTotal = sellerTotals.getOrDefault(sellerDTO, 0);
             sellerTotal += cartItem.getPrice() * cartItem.getQuantity();
-            sellerTotals.put(seller, sellerTotal);
+            sellerTotals.put(sellerDTO, sellerTotal);
         }
 
-        // 환경 변수 추가
+        // 모델에 데이터 추가
         model.addAttribute("sellerItemsMap", sellerItemsMap);
         model.addAttribute("sellerTotals", sellerTotals);
         model.addAttribute("totalPrice", totalPrice);
-        model.addAttribute("contractAddress", contractAddress); // 추가
-        model.addAttribute("infuraApiKey", infuraApiKey);       // 추가
+
+        // JSON 형태로 프론트엔드 전달
+        model.addAttribute("sellerItemsJson", sellerItemsMap);
+        model.addAttribute("sellerAmountsJson", sellerTotals.values());
+        model.addAttribute("contractAddress", contractAddress);
+        model.addAttribute("infuraApiKey", infuraApiKey);
 
         return "cart_payment";
     }
-
 }

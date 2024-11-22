@@ -22,9 +22,13 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
+    private Long getLoggedInUserId(HttpSession session) {
+        return (Long) session.getAttribute("userId");
+    }
+
     @GetMapping
     public String cartForm(HttpSession session, Model model) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = getLoggedInUserId(session);
         if (userId == null) {
             return "redirect:/login";
         }
@@ -46,7 +50,7 @@ public class CartController {
     @PostMapping("/add")
     @ResponseBody
     public ResponseEntity<String> addToCart(@RequestParam Long itemId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = getLoggedInUserId(session);
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
@@ -70,7 +74,7 @@ public class CartController {
             int quantity = Integer.parseInt(quantityStr);
             String message = cartService.updateCartItemQuantity(cartItemId, quantity);
 
-            if (message.equals("재고 수량을 초과하는 요청입니다.")) {
+            if ("재고 수량을 초과하는 요청입니다.".equals(message)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
             }
 
@@ -87,16 +91,49 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/payment")
+    public String cartPaymentPage(HttpSession session, Model model) {
+        Long userId = getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Optional<Cart> cartOptional = cartService.getCartByUserId(userId);
+
+        if (cartOptional.isEmpty() || cartOptional.get().getCartItems().isEmpty()) {
+            model.addAttribute("sellerItemsJson", "[]");
+            model.addAttribute("totalPrice", 0);
+            return "cart_payment";
+        }
+
+        Cart cart = cartOptional.get();
+
+        // CartService에서 반환된 데이터를 JSON으로 변환하여 모델에 전달
+        String sellerItemsJson = cartService.getSellerItemsAsJson(cart.getCartItems());
+
+        int totalPrice = cart.getCartItems().stream()
+                .mapToInt(item -> item.getItem().getPrice() * item.getQuantity())
+                .sum();
+
+        model.addAttribute("sellerItemsJson", sellerItemsJson);
+        model.addAttribute("totalPrice", totalPrice);
+
+        return "cart_payment";
+    }
+
     @PostMapping("/checkout")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> checkout(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
+            System.out.println("유저 ID가 세션에 없습니다.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "로그인이 필요합니다."));
         }
 
         Optional<Cart> cartOptional = cartService.getCartByUserId(userId);
         if (cartOptional.isEmpty() || cartOptional.get().getCartItems().isEmpty()) {
+            System.out.println("장바구니가 비어 있습니다.");
             return ResponseEntity.ok(Map.of("success", false, "message", "장바구니가 비어 있습니다."));
         }
 
@@ -104,7 +141,8 @@ public class CartController {
         int totalPrice = cart.getCartItems().stream()
                 .mapToInt(item -> item.getPrice() * item.getQuantity()).sum();
 
-        session.setAttribute("checkoutCart", cart);
+        System.out.println("결제 준비 완료. Total Price: " + totalPrice);
+        session.setAttribute("cartId", cart.getId());
         session.setAttribute("totalPrice", totalPrice);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "결제 준비 완료", "totalPrice", totalPrice));

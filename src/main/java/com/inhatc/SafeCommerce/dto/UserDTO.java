@@ -16,4 +16,12 @@ public class UserDTO {
         this.nonce = nonce;
     }
 
+    @Override
+    public String toString() {
+        if (accountId != null && accountId.length() > 10) {
+            return accountId.substring(0, 10); // Ethereum 주소 앞 10자리만 반환
+        }
+        return accountId; // null이거나 10자 이하일 경우 그대로 반환
+    }
+
 }
