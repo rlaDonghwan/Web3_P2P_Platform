@@ -162,23 +162,16 @@ public class PayController {
             orderItem.setOrderPrice(cartItem.getPrice() * cartItem.getQuantity());
             order.addOrderItem(orderItem);
         }
-
-        // 주문 저장
         orderRepository.save(order);
 
-        model.addAttribute("sellerItemsMap", sellerItemsMap);
-        model.addAttribute("sellerTotals", sellerTotals);
-        model.addAttribute("totalPrice", totalPrice);
+        // 모델에 필요한 데이터 추가
+        model.addAttribute("sellerItemsMap", sellerItemsMap); // 판매자별 상품 맵
+        model.addAttribute("sellerTotals", sellerTotals);     // 판매자별 총 금액
+        model.addAttribute("totalPrice", totalPrice);         // 총 금액
+        model.addAttribute("orderId", order.getId());         // 주문 ID
+        model.addAttribute("contractAddress", contractAddress); // 스마트 컨트랙트 주소
 
-        model.addAttribute("sellerItemsJson", sellerItemsMap);
-        model.addAttribute("sellerAmountsJson", sellerTotals.values());
-        model.addAttribute("contractAddress", contractAddress);
-        model.addAttribute("infuraApiKey", infuraApiKey);
-        model.addAttribute("orderId", order.getId());
-        model.addAttribute("contractAddress", contractAddress);
-
-
-        return "cart_payment";
+        return "cart_payment"; // 결제 페이지로 이동
     }
 
     @PostMapping("/payment/submit")
@@ -187,8 +180,11 @@ public class PayController {
         Optional<Order> orderOptional = orderRepository.findById(paymentRequest.getOrderId());
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
-            order.setTransactionId(paymentRequest.getTransactionHash()); // 트랜잭션 해시 저장
-            order.setStatus(OrderStatus.ORDER); // 상태 업데이트
+            order.setBuyerName(paymentRequest.getBuyerName());
+            order.setBuyerAddress(paymentRequest.getBuyerAddress());
+            order.setBuyerContact(paymentRequest.getBuyerContact());
+            order.setTransactionId(paymentRequest.getTransactionHash());
+            order.setStatus(OrderStatus.ORDER);
             orderRepository.save(order);
             return ResponseEntity.ok("Payment processed successfully");
         }
