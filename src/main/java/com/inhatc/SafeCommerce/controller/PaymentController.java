@@ -4,10 +4,7 @@ import com.inhatc.SafeCommerce.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,17 +17,20 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
+    /**
+     * 상품 수량 확인 및 예약 API
+     */
     @PostMapping("/checkQuantity")
     public ResponseEntity<Map<String, Object>> checkQuantity(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Long itemId = Long.valueOf(requestData.get("itemId").toString());
-            int requestedQuantity = Integer.parseInt(requestData.get("quantity").toString());
+            Long itemId = parseLongValue(requestData.get("itemId"));
+            int requestedQuantity = parseIntValue(requestData.get("quantity"));
 
             String result = paymentService.checkAndReserveQuantity(itemId, requestedQuantity);
 
             response.put("message", result);
-            if (result.equals("상품 수량이 부족합니다.")) {
+            if ("상품 수량이 부족합니다.".equals(result)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
@@ -43,51 +43,69 @@ public class PaymentController {
         }
     }
 
+    /**
+     * 결제 처리 API
+     */
     @PostMapping("/process")
     public ResponseEntity<Map<String, Object>> processPayment(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
         try {
+            // 요청 데이터 유효성 검사
+            if (!requestData.containsKey("userId") || !requestData.containsKey("items") ||
+                    !requestData.containsKey("buyerName") || !requestData.containsKey("buyerAddress") ||
+                    !requestData.containsKey("buyerContact") || !requestData.containsKey("transactionHash")) {
+                throw new IllegalArgumentException("필수 필드가 누락되었습니다.");
+            }
+
             Long userId = parseLongValue(requestData.get("userId"));
             List<Map<String, Object>> items = (List<Map<String, Object>>) requestData.get("items");
             String buyerName = (String) requestData.get("buyerName");
             String buyerAddress = (String) requestData.get("buyerAddress");
             String buyerContact = (String) requestData.get("buyerContact");
+            String transactionHash = (String) requestData.get("transactionHash");
 
             // PaymentService의 processOrder 호출
-            String result = paymentService.processOrder(userId, items, buyerName, buyerAddress, buyerContact);
+            String result = paymentService.processOrder(userId, items, buyerName, buyerAddress, buyerContact, transactionHash);
 
             response.put("message", result);
             return ResponseEntity.ok(response);
 
         } catch (ClassCastException | NumberFormatException e) {
-            response.put("error", "형변환 중 오류 발생 - 요청 데이터의 데이터 타입이 잘못되었습니다.");
+            response.put("error", "데이터 형식 오류");
+            response.put("details", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+        } catch (IllegalArgumentException e) {
+            response.put("error", "유효성 검사 실패");
             response.put("details", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 
         } catch (Exception e) {
-            response.put("error", "주문 처리 중 오류 발생");
+            response.put("error", "결제 처리 중 오류 발생");
             response.put("details", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
-    private Long parseLongValue(Object value) { // Long 타입 변환 메서드
-        if (value instanceof Number) { // 입력값이 숫자인 경우
-            return ((Number) value).longValue(); // Long 값으로 변환
-        } else if (value instanceof String) { // 입력값이 문자열인 경우
-            return Long.valueOf((String) value); // 문자열을 Long 값으로 변환
-        } else { // 그 외의 타입인 경우
-            throw new IllegalArgumentException("잘못된 데이터 타입입니다."); // 예외 발생
-        }
+    /**
+     * Long 변환 메서드
+     */
+    private Long parseLongValue(Object value) {
+        return value instanceof Number ? ((Number) value).longValue()
+                : value instanceof String ? Long.valueOf((String) value)
+                : throwIllegalArgument("Long");
     }
 
-    private int parseIntValue(Object value) { // int 타입 변환 메서드
-        if (value instanceof Number) { // 입력값이 숫자인 경우
-            return ((Number) value).intValue(); // int 값으로 변환
-        } else if (value instanceof String) { // 입력값이 문자열인 경우
-            return Integer.parseInt((String) value); // 문자열을 int 값으로 변환
-        } else { // 그 외의 타입인 경우
-            throw new IllegalArgumentException("잘못된 데이터 타입입니다."); // 예외 발생
-        }
+    /**
+     * int 변환 메서드
+     */
+    private int parseIntValue(Object value) {
+        return value instanceof Number ? ((Number) value).intValue()
+                : value instanceof String ? Integer.parseInt((String) value)
+                : throwIllegalArgument("int");
+    }
+
+    private <T> T throwIllegalArgument(String expectedType) {
+        throw new IllegalArgumentException("잘못된 데이터 타입입니다. " + expectedType + "가 필요합니다.");
     }
 }

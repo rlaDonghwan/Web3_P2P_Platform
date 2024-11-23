@@ -2,6 +2,7 @@ package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.dto.PaymentRequest;
 import com.inhatc.SafeCommerce.model.Item;
+import com.inhatc.SafeCommerce.model.Order;
 import com.inhatc.SafeCommerce.service.PayService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +40,41 @@ public class PayController {
             return "error";
         }
         return "pay_detail";
+    }
+
+    @GetMapping("/sendEther")
+    public String sendEtherPage(
+            @RequestParam String ethPrice,
+            @RequestParam String buyerName,
+            @RequestParam String buyerAddress,
+            @RequestParam String buyerContact,
+            @RequestParam int quantity,
+            @RequestParam Long itemId,
+            Model model) {
+
+        Optional<Item> itemOptional = payService.getItemById(itemId);
+        if (itemOptional.isPresent()) {
+            Item item = itemOptional.get();
+
+            // 주문 생성
+            Order order = payService.createOrder(buyerName, buyerAddress, buyerContact, quantity, item);
+
+            // 모델에 필요한 데이터 추가
+            model.addAttribute("itemName", item.getItemName());
+            model.addAttribute("itemId", itemId);
+            model.addAttribute("itemPrice", item.getPrice());
+            model.addAttribute("quantity", quantity);
+            model.addAttribute("totalPrice", item.getPrice() * quantity);
+        } else {
+            return "error";
+        }
+
+        model.addAttribute("ethPrice", ethPrice);
+        model.addAttribute("buyerName", buyerName);
+        model.addAttribute("buyerAddress", buyerAddress);
+        model.addAttribute("buyerContact", buyerContact);
+
+        return "sendEther";
     }
 
     @GetMapping("/cart/pay")

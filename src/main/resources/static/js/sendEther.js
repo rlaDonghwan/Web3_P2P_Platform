@@ -66,6 +66,7 @@ async function checkTransactionStatus(txHash) {
 }
 
 // MetaMask와 송금 트랜잭션 진행
+// MetaMask와 송금 트랜잭션 진행
 async function sendEther() {
     const canProceed = await checkAndReserveQuantity(); // 수량 확인
     if (!canProceed) return;
@@ -98,7 +99,7 @@ async function sendEther() {
 
             if (receipt && receipt.status) {
                 alert("송금이 완료되었습니다!");
-                await saveOrder(); // 결제 내역 저장
+                await saveOrder(txHash); // 트랜잭션 해시 전달
             } else {
                 alert("트랜잭션이 실패했습니다.");
             }
@@ -112,7 +113,7 @@ async function sendEther() {
 }
 
 // 결제 내역 저장 함수
-async function saveOrder() {
+async function saveOrder(transactionHash) {
     const userId = sessionStorage.getItem("userId");
     if (!userId) {
         alert("로그인 정보가 필요합니다. 다시 로그인해주세요.");
@@ -125,11 +126,22 @@ async function saveOrder() {
     const buyerAddress = getQueryParameter('buyerAddress');
     const buyerContact = getQueryParameter('buyerContact');
 
+    const requestData = {
+        userId: userId,
+        items: [{ itemId: itemId, quantity: quantity }],
+        buyerName: buyerName,
+        buyerAddress: buyerAddress,
+        buyerContact: buyerContact,
+        transactionHash: transactionHash, // 트랜잭션 해시 전달
+    };
+
+    console.log("Request Data:", requestData);
+
     try {
         const response = await fetch(`/api/process`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, itemId, quantity, buyerName, buyerAddress, buyerContact })
+            body: JSON.stringify(requestData),
         });
 
         const result = await response.json();
@@ -137,10 +149,11 @@ async function saveOrder() {
             alert("주문이 성공적으로 저장되었습니다.");
             window.location.href = "/home";
         } else {
+            console.error("Error Response:", result);
             alert(result.error || "주문 저장 중 오류 발생");
         }
     } catch (error) {
-        console.error("주문 저장 중 오류 발생:", error);
+        console.error("네트워크 오류 발생:", error);
         alert("네트워크 오류가 발생했습니다.");
     }
 }
