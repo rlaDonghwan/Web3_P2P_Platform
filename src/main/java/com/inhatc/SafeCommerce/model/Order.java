@@ -17,7 +17,7 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
-    private Long Id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -31,8 +31,10 @@ public class Order {
 
     private String buyerContact; // 구매자 연락처
 
+    private String transactionId; // 트랜잭션 ID 저장
+
     @Enumerated(EnumType.STRING)
-    private OrderStatus status; // 구매 상태
+    private OrderStatus status; // 주문 상태
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();

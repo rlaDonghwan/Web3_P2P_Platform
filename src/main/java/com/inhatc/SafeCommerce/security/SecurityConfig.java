@@ -53,7 +53,9 @@ public class SecurityConfig {
                                 "/api/**",
                                 "/sendEther",
                                 "/editItem/**",
-                                "/delete/**"
+                                "/delete/**",
+                                "/smartContract/**",
+                                "/payment/submit"
                         ).permitAll()
                         .requestMatchers(
                                 "/css/**",

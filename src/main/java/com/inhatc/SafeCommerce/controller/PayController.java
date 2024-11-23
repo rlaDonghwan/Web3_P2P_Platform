@@ -1,19 +1,23 @@
 package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.dto.DTOConverter;
+import com.inhatc.SafeCommerce.dto.PaymentRequest;
 import com.inhatc.SafeCommerce.dto.UserDTO;
 import com.inhatc.SafeCommerce.model.*;
-import com.inhatc.SafeCommerce.repository.*;
+import com.inhatc.SafeCommerce.repository.CartRepository;
+import com.inhatc.SafeCommerce.repository.ItemRepository;
+import com.inhatc.SafeCommerce.repository.OrderRepository;
+import com.inhatc.SafeCommerce.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -170,7 +174,24 @@ public class PayController {
         model.addAttribute("sellerAmountsJson", sellerTotals.values());
         model.addAttribute("contractAddress", contractAddress);
         model.addAttribute("infuraApiKey", infuraApiKey);
+        model.addAttribute("orderId", order.getId());
+        model.addAttribute("contractAddress", contractAddress);
+
 
         return "cart_payment";
+    }
+
+    @PostMapping("/payment/submit")
+    @Transactional
+    public ResponseEntity<String> submitPayment(@RequestBody PaymentRequest paymentRequest) {
+        Optional<Order> orderOptional = orderRepository.findById(paymentRequest.getOrderId());
+        if (orderOptional.isPresent()) {
+            Order order = orderOptional.get();
+            order.setTransactionId(paymentRequest.getTransactionHash()); // 트랜잭션 해시 저장
+            order.setStatus(OrderStatus.ORDER); // 상태 업데이트
+            orderRepository.save(order);
+            return ResponseEntity.ok("Payment processed successfully");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
     }
 }

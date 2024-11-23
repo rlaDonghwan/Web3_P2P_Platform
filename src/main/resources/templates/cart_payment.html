@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>장바구니 결제</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/sendEther.css}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -57,18 +58,23 @@
 </div>
 
 <script>
-    const totalPrice = [[${totalPrice}]]; // 총 금액
+    const totalPrice = [[${totalPrice}]];
+    const orderId = [[${orderId}]]; // 주문 ID
+    const contractAddress = '[[${contractAddress}]]'; // 스마트 컨트랙트 주소
     const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw';
     let ethToKrwRate = 1406; // 기본 환율: 1406원
 
     // 환율 조회 함수
     async function fetchExchangeRate() {
+        console.log('Fetching Ethereum to KRW exchange rate...');
         try {
             const response = await fetch(apiURL);
+            console.log('Exchange rate response:', response);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('Exchange rate data:', data);
             if (data.ethereum && data.ethereum.krw) {
                 ethToKrwRate = data.ethereum.krw;
                 console.log("ETH to KRW rate updated:", ethToKrwRate);
@@ -82,10 +88,23 @@
 
     // 이더리움 금액 업데이트
     function updateEthPrice() {
-        const ethPrice = totalPrice / ethToKrwRate;
-        document.getElementById('ethPrice').innerText = ethPrice.toFixed(6);
-        document.getElementById('ethAmount').value = ethPrice.toFixed(6); // 숨겨진 필드 업데이트
-        console.log("Updated ETH Price:", ethPrice.toFixed(6));
+        try {
+            const ethPrice = totalPrice / ethToKrwRate;
+            console.log("Calculated ETH Price:", ethPrice);
+            document.getElementById('ethPrice').innerText = ethPrice.toFixed(6);
+            document.getElementById('ethAmount').value = ethPrice.toFixed(6); // 숨겨진 필드 업데이트
+        } catch (error) {
+            console.error('ETH 금액 업데이트 중 오류:', error);
+        }
+    }
+
+    // MetaMask 및 Web3.js 초기화
+    if (typeof window.ethereum !== 'undefined') {
+        console.log('MetaMask is installed!');
+        window.web3 = new Web3(window.ethereum); // MetaMask의 프로바이더로 Web3.js 초기화
+    } else {
+        alert('MetaMask가 설치되어 있지 않습니다. MetaMask를 설치해주세요.');
+        throw new Error('MetaMask is not installed');
     }
 
     // 결제 정보 제출 함수
@@ -95,20 +114,35 @@
         const buyerContact = document.getElementById('buyerContact').value;
         const ethAmount = document.getElementById('ethAmount').value;
 
-        // 서버로 결제 데이터 전송
         try {
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            const buyerAccount = accounts[0];
+
+            const contractABI = await fetch('/smartContract/ContractABI.json').then(res => res.json());
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            const transaction = await contract.methods
+                .payOrder(orderId) // 주문 ID만 전달
+                .send({
+                    from: buyerAccount,
+                    value: web3.utils.toWei(ethAmount, 'ether'),
+                });
+
+            console.log('Transaction successful:', transaction);
+
             const response = await fetch('/payment/submit', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    orderId,
                     buyerName,
                     buyerAddress,
                     buyerContact,
                     ethAmount,
-                    totalPrice
-                })
+                    transactionHash: transaction.transactionHash,
+                }),
             });
 
             if (!response.ok) {
@@ -117,16 +151,16 @@
             }
 
             alert('결제가 성공적으로 완료되었습니다!');
-            window.location.href = '/'; // 결제 완료 후 메인 페이지로 이동
+            window.location.href = '/home';
         } catch (error) {
             console.error('결제 처리 중 오류:', error);
             alert('결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
         }
     }
 
-    // DOMContentLoaded에서 환율 조회 및 자동 갱신 설정
+    // DOMContentLoaded 이벤트에서 Web3.js 초기화 및 환율 갱신 설정
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('Fetching ETH to KRW exchange rate...');
+        console.log('Initializing Web3.js and fetching ETH to KRW exchange rate...');
         fetchExchangeRate();
 
         // 5분마다 환율 자동 갱신
