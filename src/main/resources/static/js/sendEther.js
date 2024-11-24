@@ -66,7 +66,6 @@ async function checkTransactionStatus(txHash) {
 }
 
 // MetaMask와 송금 트랜잭션 진행
-// MetaMask와 송금 트랜잭션 진행
 async function sendEther() {
     const canProceed = await checkAndReserveQuantity(); // 수량 확인
     if (!canProceed) return;
