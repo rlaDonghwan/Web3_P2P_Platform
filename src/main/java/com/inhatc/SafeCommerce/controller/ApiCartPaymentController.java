@@ -2,6 +2,7 @@ package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.service.CartPaymentService;
 import com.inhatc.SafeCommerce.util.DataParserUtil;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +25,21 @@ public class ApiCartPaymentController {
      * @return 장바구니 세부 정보
      */
     @GetMapping("/details")
-    public ResponseEntity<Map<String, Object>> getCartDetails(@RequestParam Long cartId) {
+    public ResponseEntity<Map<String, Object>> getCartDetails(@RequestParam(required = false) Long cartId, HttpSession session) {
+        if (cartId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "cartId가 필요합니다."));
+        }
+
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "로그인이 필요합니다."));
+        }
+
         Map<String, Object> response = new HashMap<>();
         try {
+            // 서비스에서 데이터를 가져옵니다.
             Map<String, Object> cartData = cartPaymentService.getCartDetails(cartId);
             response.put("cartData", cartData);
             return ResponseEntity.ok(response);

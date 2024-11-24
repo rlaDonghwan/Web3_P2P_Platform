@@ -128,23 +128,33 @@ public class CartController {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             System.out.println("유저 ID가 세션에 없습니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
         }
+        System.out.println("세션에서 가져온 userId: " + userId);
 
         Optional<Cart> cartOptional = cartService.getCartByUserId(userId);
         if (cartOptional.isEmpty() || cartOptional.get().getCartItems().isEmpty()) {
-            System.out.println("장바구니가 비어 있습니다.");
+            System.out.println("장바구니에 상품이 없습니다.");
             return ResponseEntity.ok(Map.of("success", false, "message", "장바구니가 비어 있습니다."));
         }
 
         Cart cart = cartOptional.get();
+
+        // 세션에 cartId 저장
+        session.setAttribute("cartId", cart.getId());
+
         int totalPrice = cart.getCartItems().stream()
                 .mapToInt(item -> item.getPrice() * item.getQuantity()).sum();
 
         System.out.println("결제 준비 완료. Total Price: " + totalPrice);
-        session.setAttribute("cartId", cart.getId());
         session.setAttribute("totalPrice", totalPrice);
 
-        return ResponseEntity.ok(Map.of("success", true, "message", "결제 준비 완료", "totalPrice", totalPrice));
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "결제 준비 완료",
+                "cartId", cart.getId(),
+                "totalPrice", totalPrice
+        ));
     }
 }

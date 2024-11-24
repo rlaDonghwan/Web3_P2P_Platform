@@ -1,8 +1,6 @@
 package com.inhatc.SafeCommerce.service;
 
-import com.inhatc.SafeCommerce.dto.DTOConverter;
 import com.inhatc.SafeCommerce.dto.PaymentRequest;
-import com.inhatc.SafeCommerce.dto.UserDTO;
 import com.inhatc.SafeCommerce.model.*;
 import com.inhatc.SafeCommerce.repository.CartRepository;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
@@ -14,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CartPaymentService {
@@ -98,41 +99,39 @@ public class CartPaymentService {
      * 사용 메서드: prepareCartPaymentData, getCartDetails
      */
     private Map<String, Object> processCartItems(Cart cart) {
-        Map<UserDTO, List<CartItem>> sellerItemsMap = new HashMap<>();
-        Map<UserDTO, Integer> sellerTotals = new HashMap<>();
+        Map<String, List<Map<String, Object>>> sellerItemsMap = new HashMap<>();
         List<String> sellerAddresses = new ArrayList<>();
         List<Integer> sellerAmounts = new ArrayList<>();
         int totalPrice = 0;
 
         for (CartItem cartItem : cart.getCartItems()) {
             User seller = cartItem.getItem().getUser();
-            UserDTO sellerDTO = DTOConverter.convertToDTO(seller);
+            String sellerAccountId = seller.getAccountId();
 
             // 이미지 데이터 처리
+            List<String> base64Images = new ArrayList<>();
             cartItem.getItem().getImages().forEach(image -> {
                 String base64Image = "data:image/png;base64," + Base64Utils.encodeToString(image.getImageData());
-                image.setBase64Image(base64Image);
+                base64Images.add(base64Image);
             });
 
             // 판매자별 항목 추가
-            sellerItemsMap.computeIfAbsent(sellerDTO, k -> new ArrayList<>()).add(cartItem);
+            sellerItemsMap.computeIfAbsent(sellerAccountId, k -> new ArrayList<>())
+                    .add(Map.of(
+                            "itemId", cartItem.getItem().getItemId(),
+                            "itemName", cartItem.getItem().getItemName(),
+                            "price", cartItem.getPrice(),
+                            "quantity", cartItem.getQuantity(),
+                            "base64Images", base64Images // 이미지 데이터 추가
+                    ));
 
-            int sellerTotal = sellerTotals.getOrDefault(sellerDTO, 0);
             int itemTotal = cartItem.getPrice() * cartItem.getQuantity();
-            sellerTotal += itemTotal;
-            sellerTotals.put(sellerDTO, sellerTotal);
-
             totalPrice += itemTotal;
         }
 
-        sellerTotals.forEach((seller, total) -> {
-            sellerAddresses.add(seller.getAccountId());
-            sellerAmounts.add(total);
-        });
-
+        // 응답 데이터 구성
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("sellerItemsMap", sellerItemsMap);
-        responseData.put("sellerTotals", sellerTotals);
         responseData.put("sellerAddresses", sellerAddresses);
         responseData.put("sellerAmounts", sellerAmounts);
         responseData.put("totalPrice", totalPrice);

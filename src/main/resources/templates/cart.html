@@ -130,20 +130,16 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        // HTML 응답을 처리
-                        console.error("서버 응답 오류:", text);
-                        throw new Error("서버에서 에러 응답을 반환했습니다.");
-                    });
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // 결제 페이지로 이동
-                    window.location.href = '/cart/pay';
+                    // cartId를 sessionStorage에 저장
+                    if (data.cartId) {
+                        sessionStorage.setItem('cartId', data.cartId); // cartId 저장
+                    } else {
+                        console.error('cartId가 응답 데이터에 없습니다.');
+                    }
+                    window.location.href = '/cart/pay'; // 결제 페이지로 이동
                 } else {
                     alert(data.message || '결제 준비 중 오류가 발생했습니다.');
                 }
