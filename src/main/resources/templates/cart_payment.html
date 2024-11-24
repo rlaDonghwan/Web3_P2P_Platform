@@ -173,43 +173,75 @@
                 window.location.href = '/cart'; // 장바구니 페이지로 리다이렉트
                 return;
             }
+
             const buyerName = document.getElementById('buyerName').value;
             const buyerAddress = document.getElementById('buyerAddress').value;
             const buyerContact = document.getElementById('buyerContact').value;
 
-            if (!cartId || !buyerName || !buyerAddress || !buyerContact) {
-                throw new Error("모든 필드를 채워야 합니다.");
+            if (!buyerName || !buyerAddress || !buyerContact) {
+                alert("모든 필드를 입력해야 합니다.");
+                return;
             }
 
-            const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+            // MetaMask 연결 및 계정 가져오기
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
             const buyer = accounts[0];
-            console.log("[INFO] Using account:", buyer);
+            console.log("[INFO] Using MetaMask account:", buyer);
 
-            const transactionHash = "dummy_tx_hash"; // 실제 MetaMask 트랜잭션 발생 시 설정
-
-            const response = await fetch('/api/cart/process', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    cartId,
-                    buyerName,
-                    buyerAddress,
-                    buyerContact,
-                    transactionHash,
-                }),
+            // 장바구니 상세 데이터 가져오기
+            const cartResponse = await fetch(`/api/cart/details?cartId=${cartId}`, {
+                method: 'GET',
+                credentials: 'include',
             });
 
-            if (!response.ok) throw new Error(await response.text());
+            if (!cartResponse.ok) {
+                alert("장바구니 데이터를 가져오는 중 오류가 발생했습니다.");
+                return;
+            }
+
+            const cartData = (await cartResponse.json()).cartData;
+            const sellers = cartData.sellerAddresses;
+            const amounts = cartData.sellerAmounts;
+            const totalPrice = cartData.totalPrice;
+
+            // 서버에서 스마트 컨트랙트 주소 가져오기
+            console.log("[INFO] Fetching smart contract address...");
+            const contractResponse = await fetch('/api/cart/contractAddress');
+            if (!contractResponse.ok) {
+                throw new Error("스마트 컨트랙트 주소를 가져오는 중 오류 발생");
+            }
+
+            const { contractAddress } = await contractResponse.json();
+            console.log("[INFO] Contract Address:", contractAddress);
+
+            // Web3.js 초기화 및 스마트 컨트랙트 설정
+            const web3 = new Web3(window.ethereum);
+            const contractABI = await (await fetch('/smartContract/ContractABI.json')).json(); // ABI 파일 로드
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            // 스마트 컨트랙트의 createOrder 호출
+            console.log("[INFO] Creating order on smart contract...");
+            const createOrderTx = await contract.methods.createOrder(sellers, amounts)
+                .send({ from: buyer });
+            console.log("[INFO] Order created:", createOrderTx);
+
+            const orderId = createOrderTx.events.OrderCreated.returnValues.orderId;
+
+            // 스마트 컨트랙트의 payOrder 호출
+            console.log("[INFO] Paying order on smart contract...");
+            const ethValue = web3.utils.toWei((totalPrice / 1000000).toString(), "ether"); // 총 금액을 ETH로 변환
+            const payOrderTx = await contract.methods.payOrder(orderId)
+                .send({ from: buyer, value: ethValue });
+
+            console.log("[INFO] Payment successful:", payOrderTx);
 
             alert("결제가 성공적으로 완료되었습니다!");
             window.location.href = '/home';
-
         } catch (error) {
             console.error("[ERROR] Payment Error:", error);
             alert("결제 처리 중 오류가 발생했습니다.");
         }
     }
-
     // 페이지 로드 시 필요한 데이터 가져오기
     document.addEventListener('DOMContentLoaded', async () => {
         await fetchCartDetails(); // 장바구니 세부 정보 가져오기

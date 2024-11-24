@@ -4,6 +4,7 @@ import com.inhatc.SafeCommerce.service.CartPaymentService;
 import com.inhatc.SafeCommerce.util.DataParserUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,16 @@ public class ApiCartPaymentController {
 
     @Autowired
     private CartPaymentService cartPaymentService;
+
+    @Value("${CONTRACT_ADDRESS}")
+    private String contractAddress;
+
+    @GetMapping("/contractAddress")
+    public ResponseEntity<Map<String, String>> getContractAddress() {
+        Map<String, String> response = new HashMap<>();
+        response.put("contractAddress", contractAddress);
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * 장바구니 상품 정보 확인 API
