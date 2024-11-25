@@ -204,6 +204,15 @@
             const amounts = cartData.sellerAmounts;
             const totalPrice = cartData.totalPrice;
 
+            // 환율 데이터 가져오기
+            const exchangeRateResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw');
+            const exchangeRateData = await exchangeRateResponse.json();
+            const ethToKrwRate = exchangeRateData.ethereum.krw;
+
+            // ETH 금액 계산
+            const ethValue = (totalPrice / ethToKrwRate).toFixed(6); // ETH 단위로 금액 변환
+            console.log(`[INFO] Calculated ETH value: ${ethValue} ETH`);
+
             // 서버에서 스마트 컨트랙트 주소 가져오기
             console.log("[INFO] Fetching smart contract address...");
             const contractResponse = await fetch('/api/cart/contractAddress');
@@ -229,9 +238,9 @@
 
             // 스마트 컨트랙트의 payOrder 호출
             console.log("[INFO] Paying order on smart contract...");
-            const ethValue = web3.utils.toWei((totalPrice / 1000000).toString(), "ether"); // 총 금액을 ETH로 변환
+            const ethValueWei = web3.utils.toWei(ethValue.toString(), "ether"); // ETH 금액을 Wei로 변환
             const payOrderTx = await contract.methods.payOrder(orderId)
-                .send({ from: buyer, value: ethValue });
+                .send({ from: buyer, value: ethValueWei });
 
             console.log("[INFO] Payment successful:", payOrderTx);
 
@@ -242,6 +251,7 @@
             alert("결제 처리 중 오류가 발생했습니다.");
         }
     }
+
     // 페이지 로드 시 필요한 데이터 가져오기
     document.addEventListener('DOMContentLoaded', async () => {
         await fetchCartDetails(); // 장바구니 세부 정보 가져오기

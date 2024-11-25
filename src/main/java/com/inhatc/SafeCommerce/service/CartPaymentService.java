@@ -7,7 +7,7 @@ import com.inhatc.SafeCommerce.repository.ItemRepository;
 import com.inhatc.SafeCommerce.repository.OrderRepository;
 import com.inhatc.SafeCommerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
@@ -18,19 +18,20 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class CartPaymentService {
 
-    @Autowired
-    private CartRepository cartRepository;
+    //    @Autowired
+    private final CartRepository cartRepository;
 
-    @Autowired
-    private OrderRepository orderRepository;
+    //    @Autowired
+    private final OrderRepository orderRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    //    @Autowired
+    private final UserRepository userRepository;
 
-    @Autowired
-    private ItemRepository itemRepository;
+    //    @Autowired
+    private final ItemRepository itemRepository;
 
     /**
      * 장바구니 데이터를 처리하고 결제에 필요한 정보를 준비합니다.
