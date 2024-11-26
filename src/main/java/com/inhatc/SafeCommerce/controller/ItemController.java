@@ -74,7 +74,7 @@ public class ItemController {
             return "redirect:/home";
         }
 
-        itemService.deleteItemById(itemId);
+        itemService.softDeleteItem(itemId); // 소프트 삭제 호출
         redirectAttributes.addFlashAttribute("successMessage", "상품이 삭제되었습니다.");
         return "redirect:/home";
     }

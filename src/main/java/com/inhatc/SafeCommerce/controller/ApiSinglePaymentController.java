@@ -21,12 +21,7 @@ public class ApiSinglePaymentController {
 
     private final SinglePaymentService singlePaymentService;
 
-    /**
-     * 단일 상품 수량 확인 및 예약 API
-     *
-     * @param requestData 상품 ID와 수량 정보
-     * @return 수량 확인 결과
-     */
+    // 단일 상품 수량 확인 및 예약 API
     @PostMapping("/checkQuantity")
     public ResponseEntity<Map<String, Object>> checkQuantity(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
@@ -48,13 +43,9 @@ public class ApiSinglePaymentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
+    //-------------------------------------------------------------------------------------------------------------------------------------------
 
-    /**
-     * 단일 상품 결제 처리 API
-     *
-     * @param requestData 결제 정보
-     * @return 결제 처리 결과
-     */
+    // 단일 상품 결제 처리 API
     @PostMapping("/process")
     public ResponseEntity<Map<String, Object>> processSinglePayment(@RequestBody Map<String, Object> requestData) {
         Map<String, Object> response = new HashMap<>();
@@ -82,4 +73,6 @@ public class ApiSinglePaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    //-------------------------------------------------------------------------------------------------------------------------------------------
+    
 }

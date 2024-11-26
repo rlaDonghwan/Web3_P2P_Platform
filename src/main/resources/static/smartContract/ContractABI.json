@@ -32,19 +32,6 @@
         "internalType": "uint256",
         "name": "orderId",
         "type": "uint256"
-      }
-    ],
-    "name": "OrderCancelled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
       },
       {
         "indexed": true,
@@ -67,26 +54,19 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
-      }
-    ],
-    "name": "OrderPaid",
-    "type": "event"
-  },
-  {
-    "inputs": [
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
       {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "orderId",
+        "name": "refundAmount",
         "type": "uint256"
       }
     ],
-    "name": "cancelOrder",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "RefundProcessed",
+    "type": "event"
   },
   {
     "inputs": [
@@ -101,7 +81,7 @@
         "type": "uint256[]"
       }
     ],
-    "name": "createOrder",
+    "name": "createAndPayOrder",
     "outputs": [
       {
         "internalType": "uint256",
@@ -109,7 +89,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -157,19 +137,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
-      }
-    ],
-    "name": "payOrder",
-    "outputs": [],
-    "stateMutability": "payable",
     "type": "function"
   }
 ]

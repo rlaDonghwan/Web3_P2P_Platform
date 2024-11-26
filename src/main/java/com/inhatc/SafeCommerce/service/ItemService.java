@@ -106,5 +106,16 @@ public class ItemService {
         itemRepository.deleteById(itemId);
     }
     //------------------------------------------------------------------------------------------------------------------
+
+    public void softDeleteItem(Long itemId) {
+        Optional<Item> itemOptional = itemRepository.findById(itemId);
+        if (itemOptional.isPresent()) {
+            Item item = itemOptional.get();
+            item.setDeleted(true); // isDeleted 플래그 설정
+            itemRepository.save(item); // 상태 업데이트
+        } else {
+            throw new IllegalArgumentException("해당 상품을 찾을 수 없습니다.");
+        }
+    }
 }
 

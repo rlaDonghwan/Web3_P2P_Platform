@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Coin Trade</title>
     <style>
         .nav h1 {
             font-size: 24px;
@@ -17,8 +17,8 @@
 <div class="nav">
     <h1>Coin Trade</h1>
     <div class="menu">
-        <a href="/home" id="homeLink">Home</a>
-        <a href="#" id="myPageLink">My Page</a>
+        <a href="/home" id="homeLink">홈</a>
+        <a href="#" id="myPageLink" onclick="handleMyPageClick(event)">주문 내역</a>
         <a href="#" id="cartLink" onclick="handleCartClick(event)">장바구니</a> <!-- 클릭 이벤트 추가 -->
     </div>
     <button class="login-button" id="loginButton" onclick="login()">Login</button>
@@ -56,6 +56,18 @@
             window.location.href = '/cart'; // 로그인이 되어 있으면 장바구니 페이지로 이동
         } else {
             alert('로그인 후 장바구니를 이용하실 수 있습니다.');
+        }
+    }
+
+    // My Page 클릭 처리
+    async function handleMyPageClick(event) {
+        event.preventDefault(); // 기본 링크 동작 막기
+        const isLoggedIn = await isUserLoggedIn();
+
+        if (isLoggedIn) {
+            window.location.href = '/myPage'; // 로그인이 되어 있으면 My Page로 이동
+        } else {
+            alert('로그인 후 My Page를 이용하실 수 있습니다.');
         }
     }
 </script>

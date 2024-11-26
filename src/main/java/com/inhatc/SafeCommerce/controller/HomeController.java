@@ -1,7 +1,9 @@
 package com.inhatc.SafeCommerce.controller;
 
+import com.inhatc.SafeCommerce.dto.OrderDetailDTO;
 import com.inhatc.SafeCommerce.model.Item;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
+import com.inhatc.SafeCommerce.repository.OrderRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -20,11 +22,13 @@ public class HomeController {
 
     private final ItemRepository itemRepository;
 
+    private final OrderRepository orderRepository;
+
 
     // 홈 화면
     @GetMapping("/home")
     public String home(Model model) {
-        List<Item> items = itemRepository.findAll().stream().map(item -> {
+        List<Item> items = itemRepository.findAllActiveItems().stream().map(item -> {
             // 각 Item의 이미지들을 Base64로 인코딩
             item.getImages().forEach(image -> {
                 String base64Image = "data:image/png;base64," + Base64Utils.encodeToString(image.getImageData());
@@ -44,7 +48,7 @@ public class HomeController {
         Long userId = (Long) session.getAttribute("userId"); // 세션에서 userId 가져오기
         model.addAttribute("userId", userId); // 모델에 추가
 
-        Optional<Item> optionalItem = itemRepository.findById(itemId);
+        Optional<Item> optionalItem = itemRepository.findActiveItemById(itemId); // 삭제되지 않은 상품만 조회
         if (optionalItem.isPresent()) {
             Item item = optionalItem.get();
             item.getImages().forEach(image -> {
@@ -58,4 +62,21 @@ public class HomeController {
         }
     }
     //------------------------------------------------------------------------------------------------------------------
+
+    @GetMapping("/myPage")
+    public String myPage(Model model, HttpSession session) {
+        // 세션에서 사용자 ID 가져오기
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login"; // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+        }
+
+        // 주문 데이터 가져오기
+        List<OrderDetailDTO> orders = orderRepository.findOrderDetailsByUserId(userId);
+
+        // 모델에 데이터 추가
+        model.addAttribute("orders", orders);
+
+        return "myPage"; // myPage.html로 이동
+    }
 }

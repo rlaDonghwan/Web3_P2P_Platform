@@ -4,48 +4,32 @@ function getQueryParameter(name) {
     return urlParams.get(name);
 }
 
-// 초기화 - URL에서 전달된 이더리움 금액과 수량을 설정
-document.getElementById("amount").value = getQueryParameter('ethPrice');
+// 초기화 - URL에서 전달된 데이터를 설정
+document.addEventListener("DOMContentLoaded", () => {
+    const itemId = getQueryParameter('itemId');
+    const ethPrice = getQueryParameter('ethPrice');
+    document.getElementById("amount").value = ethPrice;
 
-// 수량 확인 및 예약 요청 함수
-async function checkAndReserveQuantity() {
-    const itemId = getQueryParameter('itemId'); // URL에서 itemId 가져오기
-    const quantity = getQueryParameter('quantity'); // URL에서 quantity 가져오기
-    if (!itemId || !quantity) {
-        alert("상품 ID와 수량이 필요합니다.");
-        return false;
-    }
-
-    try {
-        const response = await fetch(`/api/checkQuantity`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemId, quantity })
-        });
-
-        const result = await response.json();
-        if (response.ok && result.message === "수량이 충분합니다.") {
-            return true; // 수량 확인 성공
-        } else {
-            alert(result.message || "수량이 부족합니다.");
-            return false; // 수량 부족
-        }
-    } catch (error) {
-        console.error("수량 확인 중 오류 발생:", error);
-        alert("수량 확인 중 오류가 발생했습니다.");
-        return false;
-    }
-}
+    // 받는 사람 주소 자동 입력
+    fetch(`/api/getAuthorAccount/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.account) {
+                document.getElementById("toAddress").value = data.account;
+            }
+        })
+        .catch(error => console.error("받는 사람 계좌 조회 오류:", error));
+});
 
 // MetaMask 연결 함수
 async function connectMetaMask() {
     if (typeof window.ethereum !== 'undefined') {
         try {
-            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            const accounts = await ethereum.request({method: 'eth_requestAccounts'});
             document.getElementById('fromAddress').value = accounts[0];
             document.getElementById('status').innerHTML = "MetaMask connected!";
         } catch (error) {
-            console.error("MetaMask 연결 중 오류:", error);
+            console.error("MetaMask 연결 오류:", error);
             document.getElementById('status').innerHTML = `Error: ${error.message}`;
         }
     } else {
@@ -66,9 +50,13 @@ async function checkTransactionStatus(txHash) {
 }
 
 // MetaMask와 송금 트랜잭션 진행
+
+// 결제 내역 저장 함수
+let isProcessing = false; // 상태 관리 변수
+
 async function sendEther() {
-    const canProceed = await checkAndReserveQuantity(); // 수량 확인
-    if (!canProceed) return;
+    if (isProcessing) return; // 이미 요청 중이면 반환
+    isProcessing = true;
 
     const fromAddress = document.getElementById("fromAddress").value;
     const toAddress = document.getElementById("toAddress").value;
@@ -76,6 +64,7 @@ async function sendEther() {
 
     if (!fromAddress || !toAddress || !amount) {
         document.getElementById("status").innerHTML = "모든 필드를 채워 주세요";
+        isProcessing = false;
         return;
     }
 
@@ -105,20 +94,14 @@ async function sendEther() {
         } catch (error) {
             console.error("트랜잭션 중 오류 발생:", error);
             document.getElementById("status").innerHTML = `Error: ${error.message}`;
+        } finally {
+            isProcessing = false; // 처리 완료 후 상태 해제
         }
-    } else {
-        document.getElementById("status").innerHTML = "MetaMask가 설치되어 있지 않습니다.";
     }
 }
 
-// 결제 내역 저장 함수
 async function saveOrder(transactionHash) {
     const userId = sessionStorage.getItem("userId");
-    if (!userId) {
-        alert("로그인 정보가 필요합니다. 다시 로그인해주세요.");
-        return;
-    }
-
     const itemId = getQueryParameter('itemId');
     const quantity = getQueryParameter('quantity');
     const buyerName = getQueryParameter('buyerName');
@@ -126,12 +109,12 @@ async function saveOrder(transactionHash) {
     const buyerContact = getQueryParameter('buyerContact');
 
     const requestData = {
-        userId: userId,
-        items: [{ itemId: itemId, quantity: quantity }],
-        buyerName: buyerName,
-        buyerAddress: buyerAddress,
-        buyerContact: buyerContact,
-        transactionHash: transactionHash, // 트랜잭션 해시 전달
+        userId,
+        items: [{itemId, quantity}],
+        buyerName,
+        buyerAddress,
+        buyerContact,
+        transactionHash,
     };
 
     console.log("Request Data:", requestData);
@@ -139,16 +122,19 @@ async function saveOrder(transactionHash) {
     try {
         const response = await fetch(`/api/process`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(requestData),
         });
 
         const result = await response.json();
+
         if (response.ok) {
             alert("주문이 성공적으로 저장되었습니다.");
             window.location.href = "/home";
+        } else if (result.error === "이미 처리된 트랜잭션입니다.") {
+            alert("중복된 결제 요청입니다. 다시 시도하지 마세요.");
+            window.location.href = "/home";
         } else {
-            console.error("Error Response:", result);
             alert(result.error || "주문 저장 중 오류 발생");
         }
     } catch (error) {
@@ -156,18 +142,3 @@ async function saveOrder(transactionHash) {
         alert("네트워크 오류가 발생했습니다.");
     }
 }
-
-// 페이지 로드 시 글쓴이 계좌 자동 입력
-document.addEventListener("DOMContentLoaded", () => {
-    const itemId = getQueryParameter('itemId');
-    if (!itemId) return;
-
-    fetch(`/api/getAuthorAccount/${itemId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.account) {
-                document.getElementById("toAddress").value = data.account;
-            }
-        })
-        .catch(error => console.error("계좌 정보 가져오기 오류:", error));
-});

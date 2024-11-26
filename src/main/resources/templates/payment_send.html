@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>결제 페이지</title>
+    <title>결제 화면</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.5.2/dist/web3.min.js"></script>
     <link rel="stylesheet" th:href="@{/css/sendEther.css}">
@@ -10,12 +10,11 @@
 </head>
 <body>
 <div th:insert="~{nav.html}" class="fixed-top"></div>
-<div th:insert="~{popup.html}"></div>
-<script th:src="@{/js/login.js}"></script>
 
 <div class="d-flex justify-content-center align-items-center vh-100" style="padding-top: 80px;">
     <div id="etherForm">
-        <button type="button" id="connectButton" onclick="connectMetaMask()" class="btn btn-primary mb-3">메타마스크 연결</button>
+        <button type="button" id="connectButton" onclick="connectMetaMask()" class="btn btn-primary mb-3">메타마스크 연결
+        </button>
 
         <label for="fromAddress">보내는 사람:</label>
         <input type="text" id="fromAddress" name="fromAddress" readonly>
@@ -24,13 +23,13 @@
         <input type="text" id="toAddress" name="toAddress" required>
 
         <label for="amount">수량(이더리움):</label>
-        <input type="text" id="amount" name="amount" required>
+        <input type="text" id="amount" name="amount" readonly>
 
         <button type="button" onclick="sendEther()" class="btn btn-primary mt-3">송금</button>
         <p id="status"></p>
     </div>
 </div>
 
-<script th:src="@{/js/sendEther.js}"></script>
+<script th:src="@{/js/payment_send.js}"></script>
 </body>
 </html>

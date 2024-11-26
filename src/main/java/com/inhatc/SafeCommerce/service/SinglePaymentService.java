@@ -1,6 +1,5 @@
 package com.inhatc.SafeCommerce.service;
 
-import com.inhatc.SafeCommerce.dto.PaymentRequest;
 import com.inhatc.SafeCommerce.model.*;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
 import com.inhatc.SafeCommerce.repository.OrderRepository;
@@ -32,45 +31,7 @@ public class SinglePaymentService {
         return itemRepository.findById(itemId);
     }
 
-    @Transactional
-    public Order createOrder(String buyerName, String buyerAddress, String buyerContact, int quantity, Item item) {
-        Order order = new Order();
-        order.setBuyerName(buyerName);
-        order.setBuyerAddress(buyerAddress);
-        order.setBuyerContact(buyerContact);
-        order.setOrderDate(LocalDate.now());
-        order.setStatus(OrderStatus.ORDER);
-
-        // User 설정
-        User user = userRepository.findById(item.getUser().getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        order.setUser(user);
-
-        // 주문 항목 추가
-        OrderItem orderItem = new OrderItem();
-        orderItem.setItem(item);
-        orderItem.setCount(quantity);
-        orderItem.setOrderPrice(item.getPrice() * quantity);
-        order.addOrderItem(orderItem);
-
-        return orderRepository.save(order);
-    }
-
-    @Transactional
-    public void updateOrderWithPaymentDetails(PaymentRequest paymentRequest) {
-        Order order = orderRepository.findById(paymentRequest.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
-        order.setBuyerName(paymentRequest.getBuyerName());
-        order.setBuyerAddress(paymentRequest.getBuyerAddress());
-        order.setBuyerContact(paymentRequest.getBuyerContact());
-        order.setTransactionId(paymentRequest.getTransactionHash());
-        order.setStatus(OrderStatus.ORDER);
-        orderRepository.save(order);
-    }
-
-    /**
-     * 상품 수량 확인 및 예약
-     */
+    // 상품 수량 확인 및 예약
     public String checkAndReserveQuantity(Long itemId, int requestedQuantity) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("상품 ID가 유효하지 않습니다."));
@@ -85,10 +46,9 @@ public class SinglePaymentService {
 
         return "수량이 충분합니다.";
     }
+    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    /**
-     * 단일 상품 결제 처리
-     */
+    //단일 상품 결제 처리
     public String processOrder(Long userId, List<Map<String, Object>> items, String buyerName, String buyerAddress, String buyerContact, String transactionHash) {
         // 사용자 확인
         User user = userRepository.findById(userId)
@@ -131,4 +91,5 @@ public class SinglePaymentService {
         orderRepository.save(order);
         return "결제가 성공적으로 처리되었습니다.";
     }
+    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 }

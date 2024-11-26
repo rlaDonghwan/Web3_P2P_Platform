@@ -53,8 +53,6 @@ public class SinglePaymentController {
         Optional<Item> itemOptional = singlePaymentService.getItemById(itemId);
         if (itemOptional.isPresent()) {
             Item item = itemOptional.get();
-            singlePaymentService.createOrder(buyerName, buyerAddress, buyerContact, quantity, item);
-
             model.addAttribute("itemName", item.getItemName());
             model.addAttribute("itemId", itemId);
             model.addAttribute("itemPrice", item.getPrice());
