@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>결제 페이지</title>
+    <title>결제 및 배송지 정보 입력</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
@@ -92,8 +92,13 @@
         const itemId = [[${item.itemId}]]; // 상품 ID
         const quantity = document.getElementById("quantityInput").value; // 수량 가져오기
 
+        if (!buyerName || !buyerAddress || !buyerContact || !ethPrice || !quantity) {
+            alert("모든 필드를 입력해주세요.");
+            return;
+        }
+
         // Send Ether 페이지로 이동
-        window.location.href = `/sendEther?ethPrice=${ethPrice}&buyerName=${encodeURIComponent(buyerName)}&buyerAddress=${encodeURIComponent(buyerAddress)}&buyerContact=${encodeURIComponent(buyerContact)}&itemId=${itemId}&quantity=${quantity}`;
+        window.location.href = `/sendEther?ethPrice=${encodeURIComponent(ethPrice)}&buyerName=${encodeURIComponent(buyerName)}&buyerAddress=${encodeURIComponent(buyerAddress)}&buyerContact=${encodeURIComponent(buyerContact)}&itemId=${itemId}&quantity=${quantity}`;
     }
 </script>
 
