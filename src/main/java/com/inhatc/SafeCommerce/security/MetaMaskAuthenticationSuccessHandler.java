@@ -13,6 +13,7 @@ import java.util.Optional;
 
 // MetaMask 인증 성공 후 처리 핸들러
 public class MetaMaskAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
     private final UserRepository userRepository;
 
     // 생성자: 인증 성공 시 리다이렉트할 URL 설정 및 UserRepository 주입

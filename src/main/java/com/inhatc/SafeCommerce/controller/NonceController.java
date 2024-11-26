@@ -2,7 +2,7 @@ package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.model.User;
 import com.inhatc.SafeCommerce.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
 
 @RestController
+@RequiredArgsConstructor
 public class NonceController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     /**
      * 클라이언트가 제공한 주소(accountId)로 nonce 값을 조회하고,

@@ -2,7 +2,7 @@ package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.service.SinglePaymentService;
 import com.inhatc.SafeCommerce.util.DataParserUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +16,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class ApiSinglePaymentController {
 
-    @Autowired
-    private SinglePaymentService singlePaymentService;
+    private final SinglePaymentService singlePaymentService;
 
     /**
      * 단일 상품 수량 확인 및 예약 API

@@ -6,9 +6,9 @@ import com.inhatc.SafeCommerce.dto.UserDTO;
 import com.inhatc.SafeCommerce.service.MetaMaskAuthService;
 import com.inhatc.SafeCommerce.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -18,18 +18,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
+@RequiredArgsConstructor
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private MetaMaskAuthService metaMaskAuthService;
+    private final MetaMaskAuthService metaMaskAuthService;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private HttpSession httpSession;
+    private final HttpSession httpSession;
 
     // 일반 로그인 요청 처리
     @PostMapping("/auth/login")

@@ -3,7 +3,7 @@ package com.inhatc.SafeCommerce.controller;
 import com.inhatc.SafeCommerce.service.CartPaymentService;
 import com.inhatc.SafeCommerce.util.DataParserUtil;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +14,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cart")
+@RequiredArgsConstructor
 public class ApiCartPaymentController {
 
-    @Autowired
-    private CartPaymentService cartPaymentService;
+    private final CartPaymentService cartPaymentService;
 
     @Value("${CONTRACT_ADDRESS}")
     private String contractAddress;

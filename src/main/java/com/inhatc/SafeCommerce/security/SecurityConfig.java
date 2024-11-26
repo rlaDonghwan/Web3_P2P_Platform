@@ -1,6 +1,6 @@
 package com.inhatc.SafeCommerce.security;
 
-import com.inhatc.SafeCommerce.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,13 +15,10 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private UserRepository userRepository; // 사용자 정보를 저장하고 조회하기 위한 레포지토리
-
-    @Autowired
-    private MetaMaskAuthenticationProvider metaMaskAuthenticationProvider; // MetaMask 인증 처리
+    private final MetaMaskAuthenticationProvider metaMaskAuthenticationProvider; // MetaMask 인증 처리
 
     /**
      * AuthenticationManager Bean 정의

@@ -4,7 +4,7 @@ import com.inhatc.SafeCommerce.model.Item;
 import com.inhatc.SafeCommerce.model.User;
 import com.inhatc.SafeCommerce.service.ItemService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +15,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class ItemController {
 
-    @Autowired
-    private ItemService itemService;
+    private final ItemService itemService;
 
     @GetMapping("/addItem")
     public String addItemForm() {

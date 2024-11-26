@@ -1,10 +1,9 @@
 package com.inhatc.SafeCommerce.dto;
 
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+import lombok.Data;
+
+@Data
 public class UserDTO {
     private Long id;
     private String accountId;

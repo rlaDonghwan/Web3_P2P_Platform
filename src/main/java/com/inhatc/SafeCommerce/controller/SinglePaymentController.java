@@ -2,7 +2,7 @@ package com.inhatc.SafeCommerce.controller;
 
 import com.inhatc.SafeCommerce.model.Item;
 import com.inhatc.SafeCommerce.service.SinglePaymentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class SinglePaymentController {
 
-    @Autowired
-    private SinglePaymentService singlePaymentService;
+    private final SinglePaymentService singlePaymentService;
 
     /**
      * 단일 상품 결제 페이지

@@ -4,7 +4,7 @@ import com.inhatc.SafeCommerce.model.Cart;
 import com.inhatc.SafeCommerce.model.CartItem;
 import com.inhatc.SafeCommerce.service.CartService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -17,10 +17,10 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/cart")
+@RequiredArgsConstructor
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
 
     private Long getLoggedInUserId(HttpSession session) {
         return (Long) session.getAttribute("userId");
