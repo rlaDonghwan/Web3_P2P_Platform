@@ -6,49 +6,55 @@
     <title>장바구니 결제</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" th:href="@{/css/cart_sytle.css}">
+    <link rel="stylesheet" th:href="@{/css/cart_style.css}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div th:insert="~{nav.html}"></div>
 <div th:insert="~{popup.html}"></div>
 <script th:src="@{/js/login.js}"></script>
+
 <div class="container mt-5">
     <div id="nav" class="fixed-top"></div>
 
-    <!-- 판매자별 상품 -->
-    <div id="sellerItems" class="mb-3 p-3 border rounded"></div>
-
-    <h3>총 금액: <span id="totalPriceDisplay">0</span> 원</h3>
-    <p>이더리움 금액: <span id="totalEthPrice">계산 중...</span> ETH</p>
-
-    <!-- 결제 정보 입력 -->
-    <h4>결제 정보 입력</h4>
-    <form id="paymentForm">
-        <div class="form-group">
-            <label for="buyerName">이름:</label>
-            <input type="text" id="buyerName" name="buyerName" class="form-control" required>
+    <!-- 메인 레이아웃 -->
+    <div class="row">
+        <!-- 판매자별 상품 정보 -->
+        <div class="col-md-6">
+            <div id="sellerItems" class="mb-3 p-3 border rounded"></div>
         </div>
 
-        <div class="form-group">
-            <label for="buyerAddress">주소:</label>
-            <input type="text" id="buyerAddress" name="buyerAddress" class="form-control" required>
+        <!-- 결제 정보 입력 -->
+        <div class="col-md-6">
+            <h4>결제 정보 입력</h4>
+            <h3>총 금액: <span id="totalPriceDisplay">0</span> 원</h3>
+            <p>이더리움 금액: <span id="totalEthPrice">계산 중...</span> ETH</p>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="buyerName">이름:</label>
+                    <input type="text" id="buyerName" name="buyerName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="buyerAddress">주소:</label>
+                    <input type="text" id="buyerAddress" name="buyerAddress" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="buyerContact">연락처:</label>
+                    <input type="text" id="buyerContact" name="buyerContact" class="form-control" required>
+                </div>
+
+                <!-- 이더리움 금액을 저장할 숨겨진 필드 -->
+                <input type="hidden" id="ethAmount" name="ethAmount">
+
+                <button type="button" id="submitPaymentBtn" class="btn btn-primary btn-block">결제하기</button>
+            </form>
         </div>
-
-        <div class="form-group">
-            <label for="buyerContact">연락처:</label>
-            <input type="text" id="buyerContact" name="buyerContact" class="form-control" required>
-        </div>
-
-        <!-- 이더리움 금액을 저장할 숨겨진 필드 -->
-        <input type="hidden" id="ethAmount" name="ethAmount">
-
-        <button type="button" id="submitPaymentBtn" class="btn btn-primary btn-block">결제하기</button>
-    </form>
+    </div>
 </div>
 
 <script>
-    let contractABI;
     let ethToKrwRate = 0;
 
     // 장바구니 세부 정보 가져오기 및 렌더링
@@ -158,7 +164,6 @@
     }
 
     // 결제 처리 함수
-    // 결제 처리 함수
     async function submitPayment() {
         const submitButton = document.getElementById('submitPaymentBtn');
         submitButton.disabled = true;
@@ -176,7 +181,7 @@
             }
 
             // MetaMask 계정 연결 초기화
-            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+            const accounts = await ethereum.request({method: "eth_requestAccounts"});
             const buyer = accounts[0];
             console.log(`[INFO] Buyer Address: ${buyer}`);
 
@@ -218,7 +223,7 @@
                 throw new Error("스마트 컨트랙트 주소를 가져오는 중 오류 발생");
             }
 
-            const { contractAddress } = await contractResponse.json();
+            const {contractAddress} = await contractResponse.json();
             console.log(`[INFO] Contract Address: ${contractAddress}`);
 
             const web3 = new Web3(window.ethereum);

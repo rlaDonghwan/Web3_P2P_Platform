@@ -19,6 +19,9 @@ public class Item {
     private int price; // 가격
     private int quantity; // 수량
 
+    @Column(nullable = false)
+    private boolean isDeleted = false; // 삭제 여부
+
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemImage> images = new ArrayList<>();
 

@@ -24,7 +24,7 @@ public class HomeController {
     // 홈 화면
     @GetMapping("/home")
     public String home(Model model) {
-        List<Item> items = itemRepository.findAll().stream().map(item -> {
+        List<Item> items = itemRepository.findAllActiveItems().stream().map(item -> {
             // 각 Item의 이미지들을 Base64로 인코딩
             item.getImages().forEach(image -> {
                 String base64Image = "data:image/png;base64," + Base64Utils.encodeToString(image.getImageData());
@@ -44,7 +44,7 @@ public class HomeController {
         Long userId = (Long) session.getAttribute("userId"); // 세션에서 userId 가져오기
         model.addAttribute("userId", userId); // 모델에 추가
 
-        Optional<Item> optionalItem = itemRepository.findById(itemId);
+        Optional<Item> optionalItem = itemRepository.findActiveItemById(itemId); // 삭제되지 않은 상품만 조회
         if (optionalItem.isPresent()) {
             Item item = optionalItem.get();
             item.getImages().forEach(image -> {
