@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 내역</title>
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+</head>
+<body>
+<div th:insert="~{nav.html}"></div>
+<h2>내 주문 내역</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>상품 이름</th>
+        <th>주문 날짜</th>
+        <th>수량</th>
+        <th>총 가격</th>
+        <th>구매자 이름</th>
+        <th>구매자 주소</th>
+        <th>구매자 연락처</th>
+        <th>트랜잭션 ID</th>
+        <th>상태</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="order : ${orders}">
+        <td th:text="${order.itemName}"></td>
+        <td th:text="${order.orderDate}"></td>
+        <td th:text="${order.count}"></td>
+        <td th:text="${order.totalPrice}"></td>
+        <td th:text="${order.buyerName}"></td>
+        <td th:text="${order.buyerAddress}"></td>
+        <td th:text="${order.buyerContact}"></td>
+        <td th:text="${order.transactionId}"></td>
+        <td th:text="${order.status}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<a href="/home">홈으로</a>
+</body>
+</html>
+

@@ -1,7 +1,9 @@
 package com.inhatc.SafeCommerce.controller;
 
+import com.inhatc.SafeCommerce.dto.OrderDetailDTO;
 import com.inhatc.SafeCommerce.model.Item;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
+import com.inhatc.SafeCommerce.repository.OrderRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 public class HomeController {
 
     private final ItemRepository itemRepository;
+
+    private final OrderRepository orderRepository;
 
 
     // 홈 화면
@@ -58,4 +62,21 @@ public class HomeController {
         }
     }
     //------------------------------------------------------------------------------------------------------------------
+
+    @GetMapping("/myPage")
+    public String myPage(Model model, HttpSession session) {
+        // 세션에서 사용자 ID 가져오기
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login"; // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+        }
+
+        // 주문 데이터 가져오기
+        List<OrderDetailDTO> orders = orderRepository.findOrderDetailsByUserId(userId);
+
+        // 모델에 데이터 추가
+        model.addAttribute("orders", orders);
+
+        return "myPage"; // myPage.html로 이동
+    }
 }

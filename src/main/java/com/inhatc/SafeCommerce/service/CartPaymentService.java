@@ -5,7 +5,6 @@ import com.inhatc.SafeCommerce.model.*;
 import com.inhatc.SafeCommerce.repository.CartRepository;
 import com.inhatc.SafeCommerce.repository.ItemRepository;
 import com.inhatc.SafeCommerce.repository.OrderRepository;
-import com.inhatc.SafeCommerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,16 +20,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CartPaymentService {
 
-    //    @Autowired
     private final CartRepository cartRepository;
 
-    //    @Autowired
     private final OrderRepository orderRepository;
 
-    //    @Autowired
-    private final UserRepository userRepository;
-
-    //    @Autowired
     private final ItemRepository itemRepository;
 
     /**

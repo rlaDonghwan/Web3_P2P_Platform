@@ -1,7 +1,7 @@
 package com.inhatc.SafeCommerce.repository;
 
+import com.inhatc.SafeCommerce.dto.OrderDetailDTO;
 import com.inhatc.SafeCommerce.model.Order;
-import com.inhatc.SafeCommerce.model.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,11 +9,12 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    // 특정 사용자와 관련된 모든 주문 검색
-    @Query("SELECT o FROM Order o WHERE o.user.id = :userId")
-    List<Order> findOrdersByUserId(@Param("userId") Long userId);
-
-    // 특정 상태의 주문 검색
-    @Query("SELECT o FROM Order o WHERE o.status = :status")
-    List<Order> findOrdersByStatus(@Param("status") OrderStatus status);
+    @Query("SELECT new com.inhatc.SafeCommerce.dto.OrderDetailDTO(" +
+            "o.id, i.itemName, o.orderDate, oi.count, " +
+            "(oi.orderPrice * oi.count), o.buyerName, o.buyerAddress, o.buyerContact, o.transactionId, o.status) " +
+            "FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "JOIN oi.Item i " +
+            "WHERE o.user.id = :userId")
+    List<OrderDetailDTO> findOrderDetailsByUserId(@Param("userId") Long userId);
 }
