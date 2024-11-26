@@ -52,9 +52,12 @@ public class CartPaymentController {
     @ResponseBody
     public ResponseEntity<String> submitCartPayment(@RequestBody PaymentRequest paymentRequest) {
         try {
+            System.out.println("PaymentRequest Received: " + paymentRequest);
             cartPaymentService.updateOrderWithPaymentDetails(paymentRequest);
             return ResponseEntity.ok("Cart payment processed successfully");
         } catch (Exception e) {
+            System.err.println("Error while updating order: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }

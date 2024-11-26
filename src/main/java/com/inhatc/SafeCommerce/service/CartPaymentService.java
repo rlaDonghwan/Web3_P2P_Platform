@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class CartPaymentService {
 
@@ -76,14 +77,24 @@ public class CartPaymentService {
      */
     @Transactional
     public void updateOrderWithPaymentDetails(PaymentRequest paymentRequest) {
-        Order order = orderRepository.findById(paymentRequest.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
-        order.setBuyerName(paymentRequest.getBuyerName());
-        order.setBuyerAddress(paymentRequest.getBuyerAddress());
-        order.setBuyerContact(paymentRequest.getBuyerContact());
-        order.setTransactionId(paymentRequest.getTransactionHash());
-        order.setStatus(OrderStatus.ORDER);
-        orderRepository.save(order);
+        try {
+            System.out.println("Updating order for paymentRequest: " + paymentRequest);
+            Order order = orderRepository.findById(paymentRequest.getOrderId())
+                    .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+            System.out.println("Found order: " + order);
+
+            order.setBuyerName(paymentRequest.getBuyerName());
+            order.setBuyerAddress(paymentRequest.getBuyerAddress());
+            order.setBuyerContact(paymentRequest.getBuyerContact());
+            order.setTransactionId(paymentRequest.getTransactionHash());
+            order.setStatus(OrderStatus.ORDER);
+
+            orderRepository.save(order);
+            System.out.println("Order updated and saved: " + order);
+        } catch (Exception e) {
+            System.err.println("Error in updateOrderWithPaymentDetails: " + e.getMessage());
+            throw e;
+        }
     }
 
     // ===== 내부 헬퍼 메서드 =====

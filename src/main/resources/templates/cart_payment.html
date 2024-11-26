@@ -181,7 +181,7 @@
             }
 
             // MetaMask 계정 연결 초기화
-            const accounts = await ethereum.request({method: "eth_requestAccounts"});
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
             const buyer = accounts[0];
             console.log(`[INFO] Buyer Address: ${buyer}`);
 
@@ -223,7 +223,7 @@
                 throw new Error("스마트 컨트랙트 주소를 가져오는 중 오류 발생");
             }
 
-            const {contractAddress} = await contractResponse.json();
+            const { contractAddress } = await contractResponse.json();
             console.log(`[INFO] Contract Address: ${contractAddress}`);
 
             const web3 = new Web3(window.ethereum);
@@ -249,6 +249,29 @@
             });
 
             console.log("[INFO] Payment Successful:", tx);
+
+            // 결제 완료 후 서버에 데이터 전송
+            const paymentRequest = {
+                orderId: cartId,
+                buyerName: document.getElementById("buyerName").value,
+                buyerAddress: document.getElementById("buyerAddress").value,
+                buyerContact: document.getElementById("buyerContact").value,
+                ethAmount: (totalAmount / BigInt(Web3.utils.toWei('1', 'ether'))).toString(), // ETH 금액
+                transactionHash: tx.transactionHash // 트랜잭션 해시
+            };
+
+            const paymentResponse = await fetch("/cart/payment/submit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(paymentRequest),
+            });
+
+            if (!paymentResponse.ok) {
+                throw new Error("결제 정보를 서버에 저장하는 중 오류 발생");
+            }
+
             alert("결제가 성공적으로 완료되었습니다!");
             window.location.href = "/home";
         } catch (error) {
