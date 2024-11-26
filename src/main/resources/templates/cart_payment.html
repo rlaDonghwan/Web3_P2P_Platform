@@ -20,7 +20,7 @@
     <div id="sellerItems" class="mb-3 p-3 border rounded"></div>
 
     <h3>총 금액: <span id="totalPriceDisplay">0</span> 원</h3>
-    <p>이더리움 금액: <span id="ethPrice">계산 중...</span> ETH</p>
+    <p>이더리움 금액: <span id="totalEthPrice">계산 중...</span> ETH</p>
 
     <!-- 결제 정보 입력 -->
     <h4>결제 정보 입력</h4>
@@ -49,6 +49,7 @@
 
 <script>
     let contractABI;
+    let ethToKrwRate = 0;
 
     // 장바구니 세부 정보 가져오기 및 렌더링
     async function fetchCartDetails() {
@@ -68,7 +69,6 @@
                 credentials: 'include', // 세션 정보 포함
             });
 
-            // 리다이렉트 처리
             if (response.redirected) {
                 console.warn("[WARN] Redirect detected. User might not be logged in.");
                 alert("로그인이 필요합니다.");
@@ -76,24 +76,14 @@
                 return;
             }
 
-            // 응답 상태 확인
             if (!response.ok) {
-                if (response.status === 400) {
-                    alert("잘못된 요청입니다. 다시 시도해주세요.");
-                } else if (response.status === 401) {
-                    alert("로그인이 필요합니다.");
-                    window.location.href = '/login'; // 로그인 페이지로 리다이렉트
-                } else if (response.status === 500) {
-                    alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-                }
+                alert("장바구니 데이터를 가져오는 중 오류가 발생했습니다.");
                 throw new Error(`[${response.status}] Failed to fetch cart details`);
             }
 
-            // JSON 데이터 파싱
             const data = await response.json();
             console.log("[INFO] Cart details fetched successfully:", data);
 
-            // 데이터를 HTML에 렌더링
             if (data.cartData) {
                 renderCartDetails(data.cartData);
             } else {
@@ -102,7 +92,6 @@
             }
         } catch (error) {
             console.error("[ERROR] Failed to fetch cart details:", error);
-            alert("장바구니 데이터를 가져오는 중 오류가 발생했습니다.");
         }
     }
 
@@ -112,6 +101,7 @@
         sellerItemsContainer.innerHTML = ''; // 기존 내용 초기화
 
         const sellerItemsMap = cartData.sellerItemsMap || {};
+        let totalEthAmount = 0;
 
         for (const seller in sellerItemsMap) {
             const sellerDiv = document.createElement('div');
@@ -121,13 +111,16 @@
             const items = sellerItemsMap[seller];
             items.forEach(item => {
                 const imageSrc = item.base64Images?.[0] || '/images/default.jpg'; // 첫 번째 이미지 또는 기본 이미지 사용
+                const itemEthPrice = (item.price * item.quantity / ethToKrwRate).toFixed(6);
+                totalEthAmount += parseFloat(itemEthPrice);
+
                 sellerDiv.innerHTML += `
                 <div>
-                    <img src="${imageSrc}"
-                         alt="상품 이미지" style="width: 100px; height: 100px; object-fit: cover; margin-right: 10px;">
+                    <img src="${imageSrc}" alt="상품 이미지" style="width: 100px; height: 100px; object-fit: cover; margin-right: 10px;">
                     <p>상품명: ${item.itemName}</p>
                     <p>수량: ${item.quantity}</p>
                     <p>가격: ₩${item.price * item.quantity}</p>
+                    <p>이더리움 금액: ${itemEthPrice} ETH</p>
                 </div>
             `;
             });
@@ -136,6 +129,7 @@
         }
 
         document.getElementById('totalPriceDisplay').innerText = `${cartData.totalPrice} 원`;
+        document.getElementById('totalEthPrice').innerText = `${totalEthAmount.toFixed(6)} ETH`;
     }
 
     // 환율 데이터 가져오기
@@ -149,47 +143,30 @@
                 throw new Error("Invalid API response: " + JSON.stringify(data));
             }
 
-            console.log("[INFO] Exchange rate data:", data);
+            ethToKrwRate = data.ethereum.krw;
 
-            const ethToKrwRate = data.ethereum.krw;
             const totalPrice = parseFloat(document.getElementById('totalPriceDisplay').innerText) || 0;
             const ethPrice = totalPrice / ethToKrwRate;
 
-            document.getElementById('ethPrice').innerText = ethPrice.toFixed(6) + ' ETH';
+            document.getElementById('totalEthPrice').innerText = ethPrice.toFixed(6) + ' ETH';
             document.getElementById('ethAmount').value = ethPrice.toFixed(6);
         } catch (error) {
             console.error("[ERROR] Failed to fetch exchange rate:", error);
-            document.getElementById('ethPrice').innerText = 'N/A';
+            document.getElementById('totalEthPrice').innerText = 'N/A';
         }
     }
 
-    // 결제 제출
     async function submitPayment() {
         try {
-            console.log("[INFO] Starting payment process...");
-
             const cartId = sessionStorage.getItem("cartId");
             if (!cartId) {
                 alert("장바구니 ID가 설정되지 않았습니다.");
-                window.location.href = "/cart"; // 장바구니 페이지로 리다이렉트
                 return;
             }
 
-            const buyerName = document.getElementById("buyerName").value;
-            const buyerAddress = document.getElementById("buyerAddress").value;
-            const buyerContact = document.getElementById("buyerContact").value;
-
-            if (!buyerName || !buyerAddress || !buyerContact) {
-                alert("모든 필드를 입력해야 합니다.");
-                return;
-            }
-
-            // MetaMask 연결 및 계정 가져오기
-            const accounts = await ethereum.request({method: "eth_requestAccounts"});
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
             const buyer = accounts[0];
-            console.log("[INFO] Using MetaMask account:", buyer);
 
-            // 장바구니 상세 데이터 가져오기
             const cartResponse = await fetch(`/api/cart/details?cartId=${cartId}`, {
                 method: "GET",
                 credentials: "include",
@@ -201,66 +178,68 @@
             }
 
             const cartData = (await cartResponse.json()).cartData;
-            const sellers = cartData.sellerAddresses;
-            const amounts = cartData.sellerAmounts;
-            const totalPrice = cartData.totalPrice;
+            const sellerAddresses = [];
+            const sellerAmounts = [];
 
-            // 환율 데이터 가져오기
-            const exchangeRateResponse = await fetch(
-                "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=krw"
-            );
-            const exchangeRateData = await exchangeRateResponse.json();
-            const ethToKrwRate = exchangeRateData.ethereum.krw;
+            // 판매자별 금액 계산
+            for (const seller in cartData.sellerItemsMap) {
+                const items = cartData.sellerItemsMap[seller];
+                let sellerTotal = 0;
 
-            // ETH 금액 계산
-            const ethValue = (totalPrice / ethToKrwRate).toFixed(6);
-            console.log(`[INFO] Calculated ETH value: ${ethValue} ETH`);
+                items.forEach(item => {
+                    const ethAmount = (item.price * item.quantity / ethToKrwRate).toFixed(18);
+                    sellerTotal += parseFloat(Web3.utils.toWei(ethAmount, "ether"));
+                });
 
-            // 서버에서 스마트 컨트랙트 주소 가져오기
+                sellerAddresses.push(seller);
+                sellerAmounts.push(sellerTotal.toString());
+            }
+
+            console.log("Seller Addresses:", sellerAddresses);
+            console.log("Seller Amounts (in Wei):", sellerAmounts);
+
+            const totalAmount = sellerAmounts.reduce((acc, val) => acc + BigInt(val), BigInt(0));
+
             const contractResponse = await fetch("/api/cart/contractAddress");
             if (!contractResponse.ok) {
                 throw new Error("스마트 컨트랙트 주소를 가져오는 중 오류 발생");
             }
 
-            const {contractAddress} = await contractResponse.json();
-            console.log("[INFO] Contract Address:", contractAddress);
+            const { contractAddress } = await contractResponse.json();
 
-            // Web3.js 초기화 및 스마트 컨트랙트 설정
             const web3 = new Web3(window.ethereum);
             const contractABI = await (await fetch("/smartContract/ContractABI.json")).json();
             const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-            // 스마트 컨트랙트의 createOrder 호출
             console.log("[INFO] Creating order on smart contract...");
-            const createOrderTx = await contract.methods.createOrder(sellers, amounts).send({
-                from: buyer,
-            });
+            const createOrderTx = await contract.methods.createOrder(sellerAddresses, sellerAmounts).send({ from: buyer });
             console.log("[INFO] Order created:", createOrderTx);
 
             const orderId = createOrderTx.events.OrderCreated.returnValues.orderId;
 
-            // 스마트 컨트랙트의 payOrder 호출
             console.log("[INFO] Paying order on smart contract...");
-            const ethValueWei = web3.utils.toWei(ethValue.toString(), "ether"); // ETH 금액을 Wei로 변환
+            const gasEstimate = await contract.methods.payOrder(orderId).estimateGas({
+                from: buyer,
+                value: totalAmount.toString(),
+            });
+
             const payOrderTx = await contract.methods.payOrder(orderId).send({
                 from: buyer,
-                value: ethValueWei,
+                value: totalAmount.toString(),
+                gas: gasEstimate,
             });
 
             console.log("[INFO] Payment successful:", payOrderTx);
-
             alert("결제가 성공적으로 완료되었습니다!");
-            window.location.href = "/home";
         } catch (error) {
             console.error("[ERROR] Payment Error:", error);
             alert("결제 처리 중 오류가 발생했습니다.");
         }
     }
 
-    // 페이지 로드 시 필요한 데이터 가져오기
     document.addEventListener('DOMContentLoaded', async () => {
-        await fetchCartDetails(); // 장바구니 세부 정보 가져오기
         await fetchExchangeRate(); // 환율 정보 가져오기
+        await fetchCartDetails(); // 장바구니 세부 정보 가져오기
         document.getElementById('submitPaymentBtn').addEventListener('click', submitPayment); // 결제 버튼 이벤트 등록
     });
 </script>
