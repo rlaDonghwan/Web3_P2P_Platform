@@ -158,15 +158,21 @@
 
     async function submitPayment() {
         try {
+            console.log("[INFO] Starting payment process...");
+
+            // 장바구니 ID 가져오기
             const cartId = sessionStorage.getItem("cartId");
             if (!cartId) {
                 alert("장바구니 ID가 설정되지 않았습니다.");
                 return;
             }
 
+            // MetaMask 계정 연결
             const accounts = await ethereum.request({ method: "eth_requestAccounts" });
             const buyer = accounts[0];
+            console.log(`[INFO] Buyer Address: ${buyer}`);
 
+            // 장바구니 데이터 가져오기
             const cartResponse = await fetch(`/api/cart/details?cartId=${cartId}`, {
                 method: "GET",
                 credentials: "include",
@@ -174,66 +180,100 @@
 
             if (!cartResponse.ok) {
                 alert("장바구니 데이터를 가져오는 중 오류가 발생했습니다.");
-                return;
+                throw new Error(`[${cartResponse.status}] Failed to fetch cart details`);
             }
 
             const cartData = (await cartResponse.json()).cartData;
             const sellerAddresses = [];
             const sellerAmounts = [];
+            let totalAmount = BigInt(0);
 
             // 판매자별 금액 계산
             for (const seller in cartData.sellerItemsMap) {
                 const items = cartData.sellerItemsMap[seller];
-                let sellerTotal = 0;
+                let sellerTotal = BigInt(0);
 
                 items.forEach(item => {
                     const ethAmount = (item.price * item.quantity / ethToKrwRate).toFixed(18);
-                    sellerTotal += parseFloat(Web3.utils.toWei(ethAmount, "ether"));
+                    const ethAmountWei = BigInt(Web3.utils.toWei(ethAmount, "ether"));
+                    sellerTotal += ethAmountWei;
+                    console.log(`[INFO] Item: ${item.itemName}, Amount (ETH): ${ethAmount}`);
                 });
 
                 sellerAddresses.push(seller);
                 sellerAmounts.push(sellerTotal.toString());
+                totalAmount += sellerTotal;
             }
 
-            console.log("Seller Addresses:", sellerAddresses);
-            console.log("Seller Amounts (in Wei):", sellerAmounts);
+            console.log("[INFO] Seller Addresses:", sellerAddresses);
+            console.log("[INFO] Seller Amounts (in Wei):", sellerAmounts);
+            console.log("[INFO] Total Payment Amount (in Wei):", totalAmount.toString());
 
-            const totalAmount = sellerAmounts.reduce((acc, val) => acc + BigInt(val), BigInt(0));
+            if (totalAmount <= BigInt(0)) {
+                alert("결제 금액이 0 또는 음수입니다. 다시 확인해주세요.");
+                return;
+            }
 
+            // 스마트 컨트랙트 주소 가져오기
             const contractResponse = await fetch("/api/cart/contractAddress");
             if (!contractResponse.ok) {
                 throw new Error("스마트 컨트랙트 주소를 가져오는 중 오류 발생");
             }
 
             const { contractAddress } = await contractResponse.json();
+            console.log(`[INFO] Contract Address: ${contractAddress}`);
 
             const web3 = new Web3(window.ethereum);
             const contractABI = await (await fetch("/smartContract/ContractABI.json")).json();
             const contract = new web3.eth.Contract(contractABI, contractAddress);
 
+            // 주문 생성
             console.log("[INFO] Creating order on smart contract...");
             const createOrderTx = await contract.methods.createOrder(sellerAddresses, sellerAmounts).send({ from: buyer });
-            console.log("[INFO] Order created:", createOrderTx);
 
+            console.log("[INFO] Order Created:", createOrderTx);
             const orderId = createOrderTx.events.OrderCreated.returnValues.orderId;
+            console.log(`[INFO] Order ID: ${orderId}`);
 
-            console.log("[INFO] Paying order on smart contract...");
+            // 결제 진행
+            console.log("[INFO] Estimating gas for payment...");
             const gasEstimate = await contract.methods.payOrder(orderId).estimateGas({
                 from: buyer,
                 value: totalAmount.toString(),
             });
 
+            const safeGasLimit = Math.ceil(gasEstimate * 1.1); // 10% 여유를 추가
+
+            console.log(`[INFO] Estimated Gas: ${gasEstimate}`);
+            console.log("[INFO] Initiating payment...");
+
             const payOrderTx = await contract.methods.payOrder(orderId).send({
                 from: buyer,
                 value: totalAmount.toString(),
-                gas: gasEstimate,
-            });
+                gas: safeGasLimit,
+            })
+                .on("transactionHash", (hash) => {
+                    console.log(`[INFO] Transaction sent: ${hash}`);
+                })
+                .on("receipt", (receipt) => {
+                    console.log("[INFO] Payment Successful:", receipt);
+                    alert("결제가 성공적으로 완료되었습니다!");
+                    window.location.href = "/home";
+                })
+                .on("error", (error) => {
+                    console.error("[ERROR] Payment Error:", error);
 
-            console.log("[INFO] Payment successful:", payOrderTx);
-            alert("결제가 성공적으로 완료되었습니다!");
+                    if (error.message.includes("execution reverted:")) {
+                        alert("스마트 컨트랙트에서 트랜잭션이 거부되었습니다. 금액 또는 조건을 확인하세요.");
+                    } else if (error.message.includes("User denied transaction")) {
+                        alert("사용자가 결제를 취소했습니다.");
+                    } else {
+                        alert(`결제 처리 중 오류가 발생했습니다: ${error.message}`);
+                    }
+                });
         } catch (error) {
-            console.error("[ERROR] Payment Error:", error);
-            alert("결제 처리 중 오류가 발생했습니다.");
+            console.error("[ERROR] Payment Error (Outer Catch):", error);
+            alert(`결제 처리 중 예상치 못한 오류가 발생했습니다: ${error.message}`);
         }
     }
 
