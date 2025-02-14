@@ -36,5 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-application.properties
-smartContract
+src/main/resources/application.properties
+src/main/resources/static/smartContract
